@@ -1,0 +1,12 @@
+# .env files containing credentials
+.env
+.env*
+!.env.example
+
+# Mac and Linux file system files
+*.swp
+.DS_Store
+
+# The databases
+db/*.sqlite3
+db/*.sqlite3*

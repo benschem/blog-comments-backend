@@ -1,0 +1,29 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+  - rubocop-factory_bot
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  Exclude:
+    - "bin/*"
+    - "db/**/*"
+    - "tmp/**/*"
+    - "log/**/*"
+    - "vendor/**/*"
+    - "coverage/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 120 # Default is 80 characters
+
+Metrics/BlockLength:
+  Max: 30 # Default is 25
+  Exclude:
+    - "spec/**/*"
+
+RSpec/NestedGroups:
+  Max: 4 # Default is 3

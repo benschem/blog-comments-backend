@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+#
+# Per-environment database config. The active section is chosen by RACK_ENV
+# (set in spec_helper.rb for tests). Paths are relative to the app root and
+# stay relative in every environment: in the container the volume is mounted
+# at ./db, so the same path resolves to the persistent disk there.
+
+default: &default
+  adapter: sqlite3
+  pool: 5 # matches Puma's default thread count
+  timeout: 5000 # concurrent writes wait instead of complaining "database is locked"
+
+development:
+  <<: *default
+  database: db/comments_dev.sqlite3
+
+test:
+  <<: *default
+  database: db/comments_test.sqlite3
+
+staging:
+  <<: *default
+  database: db/comments_staging.sqlite3
+
+production:
+  <<: *default
+  database: db/comments_prod.sqlite3
