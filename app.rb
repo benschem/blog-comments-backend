@@ -32,3 +32,6 @@ use Rack::Attack
 
 # Autoload models now that AR is connected
 Dir[File.join(__dir__, 'app/models/*.rb')].each { require it }
+
+# Load the integrations (Resend email, Netlify build hook)
+Dir[File.join(__dir__, 'lib/*.rb')].each { require it }

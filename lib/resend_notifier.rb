@@ -1,0 +1,63 @@
+# frozen_string_literal: true
+
+require 'resend'
+require 'cgi'
+
+# Sends the "new comment awaiting moderation" email via Resend. With no admin
+# dashboard, this email *is* the moderation queue, so a delivery failure is
+# logged loudly and re-raised rather than swallowed — a silently dropped mail
+# would strand a comment in `pending` forever. The caller (POST /comments)
+# rescues it so the commenter still gets a 201. Reads ENV at call-time so specs
+# can swap the config cleanly.
+module ResendNotifier
+  module_function
+
+  def notify(comment)
+    Resend.api_key = ENV.fetch('RESEND_API_KEY', nil)
+    Resend::Emails.send(message_for(comment))
+  rescue StandardError => e
+    warn '[ResendNotifier] failed to send moderation email for comment ' \
+         "#{comment.id} on #{comment.post_slug.inspect}: #{e.class}: #{e.message}"
+    raise
+  end
+
+  def message_for(comment)
+    {
+      from: ENV.fetch('RESEND_FROM_EMAIL'),
+      to: ENV.fetch('MODERATION_NOTIFY_EMAIL'),
+      subject: subject_for(comment),
+      html: html_for(comment)
+    }
+  end
+
+  def subject_for(comment)
+    "New comment awaiting moderation on #{comment.post_slug}"
+  end
+
+  def html_for(comment)
+    link = "#{ENV.fetch('APP_BASE_URL')}/moderate/#{comment.moderation_token}"
+    <<~HTML
+      <h2>New comment on #{h comment.post_slug}</h2>
+      <p><strong>#{h comment.author_name}</strong>#{role_html(comment)}#{website_html(comment)}</p>
+      <blockquote>#{h comment.body}</blockquote>
+      <p><a href="#{h link}">Review, approve or reject this comment</a></p>
+    HTML
+  end
+
+  # Optional metadata fragments — omitted entirely when the commenter left them blank.
+  def role_html(comment)
+    return '' if comment.author_role.blank?
+
+    " &mdash; #{h comment.author_role}"
+  end
+
+  def website_html(comment)
+    return '' if comment.author_website.blank?
+
+    " (#{h comment.author_website})"
+  end
+
+  def h(text)
+    CGI.escapeHTML(text.to_s)
+  end
+end
