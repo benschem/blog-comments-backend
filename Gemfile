@@ -15,6 +15,8 @@ gem 'sqlite3'
 
 group :development, :test do
   gem 'dotenv'
+  gem 'rack-test'
+  gem 'rspec'
 
   gem 'simplecov', '~> 0.22.0', require: false
 

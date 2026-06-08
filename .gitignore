@@ -10,3 +10,9 @@
 # The databases
 db/*.sqlite3
 db/*.sqlite3*
+
+# rspec persisted state for --only-failures
+spec/examples.txt
+
+# Simplecov output
+coverage/
