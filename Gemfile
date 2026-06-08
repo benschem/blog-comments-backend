@@ -7,6 +7,7 @@ source 'https://rubygems.org'
 ruby file: '.ruby-version'
 
 gem 'puma'
+gem 'rack-attack'
 gem 'rackup'
 gem 'rake'
 gem 'resend'
