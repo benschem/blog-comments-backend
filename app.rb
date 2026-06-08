@@ -35,3 +35,8 @@ Dir[File.join(__dir__, 'app/models/*.rb')].each { require it }
 
 # Load the integrations (Resend email, Netlify build hook)
 Dir[File.join(__dir__, 'lib/*.rb')].each { require it }
+
+# Load the route handlers. Classic-style get/post blocks delegate to
+# Sinatra::Application, so this must run after `require 'sinatra'` and the
+# config/middleware above for the routes to land on the configured app.
+Dir[File.join(__dir__, 'app/controllers/*.rb')].each { require it }
