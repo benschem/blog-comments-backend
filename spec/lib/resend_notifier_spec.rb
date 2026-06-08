@@ -75,5 +75,42 @@ RSpec.describe ResendNotifier do
           .and output(/ResendNotifier/).to_stderr
       end
     end
+
+    context 'with optional author metadata' do
+      let(:sent) { {} }
+
+      before do
+        allow(Resend::Emails).to receive(:send) { |params| sent.merge!(params) }
+        described_class.notify(comment)
+      end
+
+      context 'when the role and website are present' do
+        let(:comment) { build(:comment, author_role: 'Staff Engineer', author_website: 'https://ada.example') }
+
+        it 'shows them next to the name', :aggregate_failures do
+          expect(sent[:html]).to include('&mdash; Staff Engineer')
+          expect(sent[:html]).to include('(https://ada.example)')
+        end
+      end
+
+      context 'when the role and website are blank' do
+        let(:comment) { build(:comment, author_role: '', author_website: nil) }
+
+        it 'leaves out the dash and parens', :aggregate_failures do
+          expect(sent[:html]).not_to include('&mdash;')
+          expect(sent[:html]).not_to include('(')
+        end
+      end
+
+      context 'with HTML in the role and website' do
+        let(:comment) { build(:comment, author_role: '<b>boss</b>', author_website: '<i>site</i>') }
+
+        it 'escapes them', :aggregate_failures do
+          expect(sent[:html]).to include('&lt;b&gt;boss&lt;/b&gt;')
+          expect(sent[:html]).to include('&lt;i&gt;site&lt;/i&gt;')
+          expect(sent[:html]).not_to include('<b>boss</b>')
+        end
+      end
+    end
   end
 end

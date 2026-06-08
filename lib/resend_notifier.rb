@@ -37,10 +37,10 @@ module ResendNotifier
   def html_for(comment)
     link = "#{ENV.fetch('APP_BASE_URL')}/moderate/#{comment.moderation_token}"
     <<~HTML
-      <h2>New comment on #{h comment.post_slug}</h2>
-      <p><strong>#{h comment.author_name}</strong>#{role_html(comment)}#{website_html(comment)}</p>
-      <blockquote>#{h comment.body}</blockquote>
-      <p><a href="#{h link}">Review, approve or reject this comment</a></p>
+      <h2>New comment on #{escape_html comment.post_slug}</h2>
+      <p><strong>#{escape_html comment.author_name}</strong>#{role_html(comment)}#{website_html(comment)}</p>
+      <blockquote>#{escape_html comment.body}</blockquote>
+      <p><a href="#{escape_html link}">Review, approve or reject this comment</a></p>
     HTML
   end
 
@@ -48,16 +48,16 @@ module ResendNotifier
   def role_html(comment)
     return '' if comment.author_role.blank?
 
-    " &mdash; #{h comment.author_role}"
+    " &mdash; #{escape_html comment.author_role}"
   end
 
   def website_html(comment)
     return '' if comment.author_website.blank?
 
-    " (#{h comment.author_website})"
+    " (#{escape_html comment.author_website})"
   end
 
-  def h(text)
+  def escape_html(text)
     CGI.escapeHTML(text.to_s)
   end
 end
