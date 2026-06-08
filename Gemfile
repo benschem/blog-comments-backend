@@ -32,5 +32,6 @@ group :development, :test do
   gem 'rubocop', '~> 1.87', require: false
   gem 'rubocop-factory_bot', '~> 2.28', require: false
   gem 'rubocop-performance', '~> 1.26', require: false
+  gem 'rubocop-rake', '~> 0.7', require: false
   gem 'rubocop-rspec', '~> 3.10', require: false
 end
