@@ -14,6 +14,7 @@ gem 'resend'
 gem 'sinatra', require: 'sinatra/base' # Prevents classic auto-run; required for modular Sinatra::Base apps
 gem 'sinatra-activerecord'
 gem 'sqlite3'
+gem 'sucker_punch'
 
 group :development, :test do
   gem 'dotenv'

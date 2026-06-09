@@ -47,6 +47,10 @@ Dir[File.join(__dir__, 'app/models/*.rb')].each { require it }
 # Load the integrations (Resend email, Netlify build hook)
 Dir[File.join(__dir__, 'lib/*.rb')].each { require it }
 
+# Load the background jobs. After lib/ (the jobs call into the integrations) and
+# before the controllers that enqueue them.
+Dir[File.join(__dir__, 'app/jobs/*.rb')].each { require it }
+
 # Load the route handlers. Each file reopens `App` to add its helpers and
 # routes, so this must run after the class is defined above.
 Dir[File.join(__dir__, 'app/controllers/*.rb')].each { require it }

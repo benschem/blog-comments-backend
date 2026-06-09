@@ -25,13 +25,13 @@ class App < Sinatra::Base
       }
     end
 
-    # The moderation email is best-effort: a delivery failure must never cost the
-    # commenter their 201, so it is logged (ResendNotifier already warns) and
-    # swallowed here. The CLI `comments:pending` task is the backstop.
+    # Hand the moderation email to a background worker so the commenter's 201
+    # isn't blocked on the Resend round-trip. Delivery is best-effort: failures
+    # are logged and swallowed inside NotifyModeratorJob, with the CLI
+    # `comments:pending` digest as the durable backstop (sucker_punch's queue is
+    # in-memory, so a job lost to a restart is not retried).
     def notify_moderator(comment)
-      ResendNotifier.notify(comment)
-    rescue StandardError => e
-      warn "[POST /comments] moderation email failed for ##{comment.id}: #{e.class}: #{e.message}"
+      NotifyModeratorJob.perform_async(comment)
     end
   end
 
