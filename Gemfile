@@ -11,7 +11,7 @@ gem 'rack-attack'
 gem 'rackup'
 gem 'rake'
 gem 'resend'
-gem 'sinatra'
+gem 'sinatra', require: 'sinatra/base' # Prevents classic auto-run; required for modular Sinatra::Base apps
 gem 'sinatra-activerecord'
 gem 'sqlite3'
 

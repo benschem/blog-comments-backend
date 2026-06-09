@@ -2,10 +2,10 @@
 
 require 'rack/test'
 
-# Rack::Test::Methods needs an `app` to drive; point it at the Sinatra app.
+# Rack::Test::Methods needs an `app` to drive; point it at the modular App.
 module RackTestHelpers
   def app
-    Sinatra::Application
+    App
   end
 end
 
