@@ -68,8 +68,10 @@ Notes:
 
 ## API
 
-- **`POST /comments`** — submit a comment. Stored `pending`, notifies via Resend.
-  Honeypot field `homepage` → silent success, no row. Throttled to 5/60s per IP.
+- **`POST /comments`** — submit a comment. Stored `pending`, then a Resend
+  notification is queued to a background worker (`sucker_punch`) so the response
+  isn't blocked on the email round-trip. Honeypot field `homepage` → silent
+  success, no row. Throttled to 5/60s per IP.
 - **`GET /comments?post_slug=…`** — approved comments for a post, ordered,
   `public_attributes` only (JSON).
 - **`GET /moderate/:token`** — prefetch-safe confirm page with approve/reject
@@ -85,7 +87,10 @@ GET links.
 
 The email links are the primary moderation UI, but the same actions are available
 from the terminal as a fallback — handy over SSH on the VPS, or if a notification
-email goes missing. All run via `bundle exec rake`:
+never arrives. The notification is sent from an in-memory background queue, so a
+crash or restart mid-send can drop it silently with no retry; `comments:pending`
+is the durable backstop that makes sure such a comment is never lost. All run via
+`bundle exec rake`:
 
 - **`comments:pending`** — list the comments awaiting moderation, each with its
   id, local (AEST) timestamp, post, author and a body excerpt.
@@ -108,23 +113,24 @@ abort with a clear message on an unknown or missing id.
 ```
 .
 ├── app.rb                  # bootstrap: requires, DB config, middleware, autoload globs
-├── config.ru               # Puma entry point → runs Sinatra::Application
+├── config.ru               # Puma entry point → runs the App class
 ├── Rakefile                # db:* tasks + comments:* CLI moderation tasks
 ├── config/database.yml     # per-environment SQLite config, chosen by RACK_ENV
 ├── app/
 │   ├── models/comment.rb   # the Comment model
-│   └── controllers/        # routes (classic-style blocks) — being built
+│   ├── controllers/        # routes (reopen the App class)
+│   └── jobs/               # NotifyModeratorJob — background moderation email
 ├── db/
 │   ├── migrate/            # migrations
 │   └── schema.rb           # generated; databases are gitignored
-├── lib/                    # ResendNotifier / NetlifyBuildTrigger — being built
+├── lib/                    # ResendNotifier / NetlifyBuildTrigger
 └── spec/                   # RSpec + rack-test + factory_bot + database_cleaner
 ```
 
-`app.rb` is the single setup point: it loads completely whether the entry point
-is the server (`config.ru`) or rake (`Rakefile`). The route files use top-level
-`get`/`post` blocks that delegate to `Sinatra::Application` and are `require`d
-from `app.rb` after `require 'sinatra'`.
+`app.rb` is the single setup point: it defines the modular `App < Sinatra::Base`
+and loads completely whether the entry point is the server (`config.ru`) or rake
+(`Rakefile`). The controller files reopen the `App` class to register their
+routes and helpers, and are `require`d from `app.rb` after the class is defined.
 
 ## Getting started
 
