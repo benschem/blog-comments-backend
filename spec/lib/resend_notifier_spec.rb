@@ -76,6 +76,21 @@ RSpec.describe ResendNotifier do
       end
     end
 
+    context 'when the send exceeds the timeout' do
+      # Shrink the bound and make the send outlast it, so Timeout fires first and
+      # the example stays fast and deterministic (no real-time sleeping waited on).
+      before do
+        stub_const('ResendNotifier::TIMEOUT_SECONDS', 0.05)
+        allow(Resend::Emails).to receive(:send) { sleep 1 }
+      end
+
+      it 'aborts with a Timeout::Error rather than hanging, logged and re-raised' do
+        expect { described_class.notify(comment) }
+          .to raise_error(Timeout::Error)
+          .and output(/ResendNotifier/).to_stderr
+      end
+    end
+
     context 'with optional author metadata' do
       let(:sent) { {} }
 
