@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# Run standard Active Record commands like `rake db:migrate`, `rake db:rollback`, and `rake db:seed`
+# Run standard Active Record commands like `rake db:migrate`
 require 'sinatra/activerecord/rake'
 
 # Internal prerequisite the AR db:* tasks expect; doubles as our app-boot hook
 # (the require pulls in AR, the models, and lib/). Hidden from `rake -T` on
 # purpose, so it carries no desc and opts out of Rake/Desc.
 namespace :db do
-  task :load_config do # rubocop:disable Rake/Desc
+  task :load_config do # rubocop:disable Rake/Desc,Lint/RedundantCopDisableDirective
     require './app'
   end
 end
@@ -43,7 +43,7 @@ namespace :comments do
     comment.approve!
 
     begin
-      NetlifyBuildTrigger.fire
+      NetlifyBuildHook.trigger
       outcome = 'site rebuild triggered'
     rescue StandardError => e
       outcome = "approved, but the build hook failed (#{e.class}: #{e.message})"

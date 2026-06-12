@@ -64,7 +64,7 @@ class App < Sinatra::Base
     comment.approve!
 
     begin
-      NetlifyBuildTrigger.fire
+      NetlifyBuildHook.trigger
     rescue StandardError => e
       warn "[POST /moderate approve] build hook failed for ##{comment.id}: #{e.class}: #{e.message}"
     end

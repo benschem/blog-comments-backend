@@ -41,7 +41,7 @@ RSpec.describe 'Moderation', type: :request do
 
       context 'when the build hook succeeds' do
         before do
-          allow(NetlifyBuildTrigger).to receive(:fire)
+          allow(NetlifyBuildHook).to receive(:trigger)
           post "/moderate/#{token}/approve"
         end
 
@@ -49,14 +49,14 @@ RSpec.describe 'Moderation', type: :request do
           expect(comment.reload.status).to eq('approved')
         end
 
-        it 'fires the build hook' do
-          expect(NetlifyBuildTrigger).to have_received(:fire)
+        it 'triggers the build hook' do
+          expect(NetlifyBuildHook).to have_received(:trigger)
         end
       end
 
       context 'when the build hook fails' do
         before do
-          allow(NetlifyBuildTrigger).to receive(:fire).and_raise(StandardError, 'hook down')
+          allow(NetlifyBuildHook).to receive(:trigger).and_raise(StandardError, 'hook down')
           post "/moderate/#{token}/approve"
         end
 
@@ -70,7 +70,7 @@ RSpec.describe 'Moderation', type: :request do
       let(:token) { 'does-not-exist' }
 
       before do
-        allow(NetlifyBuildTrigger).to receive(:fire)
+        allow(NetlifyBuildHook).to receive(:trigger)
         post "/moderate/#{token}/approve"
       end
 
@@ -78,15 +78,15 @@ RSpec.describe 'Moderation', type: :request do
         expect(last_response).to be_not_found
       end
 
-      it 'fires no build hook' do
-        expect(NetlifyBuildTrigger).not_to have_received(:fire)
+      it 'triggers no build hook' do
+        expect(NetlifyBuildHook).not_to have_received(:trigger)
       end
     end
   end
 
   describe 'POST /moderate/:token/reject' do
     before do
-      allow(NetlifyBuildTrigger).to receive(:fire)
+      allow(NetlifyBuildHook).to receive(:trigger)
       post "/moderate/#{token}/reject"
     end
 
@@ -97,8 +97,8 @@ RSpec.describe 'Moderation', type: :request do
         expect(comment.reload.status).to eq('rejected')
       end
 
-      it 'fires no build hook' do
-        expect(NetlifyBuildTrigger).not_to have_received(:fire)
+      it 'triggers no build hook' do
+        expect(NetlifyBuildHook).not_to have_received(:trigger)
       end
     end
 
