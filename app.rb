@@ -23,5 +23,10 @@ end
 
 Dir[File.join(__dir__, 'app/models/*.rb')].each { require it }
 Dir[File.join(__dir__, 'lib/*.rb')].each { require it }
+
+require_relative 'mailer/app_mailer'
+require_relative 'mailer/mail_helpers'
+require_relative 'mailer/mail/moderation_email'
+
 Dir[File.join(__dir__, 'app/jobs/*.rb')].each { require it }
 Dir[File.join(__dir__, 'app/controllers/*.rb')].each { require it }
