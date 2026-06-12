@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-# A single blog comment. Nothing is public until moderated: rows are created
-# `pending` (DB default) and only surface once `approve!`d. The unguessable
-# `moderation_token` is the capability that gates the approve/reject links.
+# A single blog comment.
 class Comment < ActiveRecord::Base
   STATUSES = %w[pending approved spam rejected].freeze
 
-  # Populates `moderation_token` with a unique value on create.
   has_secure_token :moderation_token
 
   validates :post_slug, presence: true, length: { maximum: 200 }
@@ -21,8 +18,6 @@ class Comment < ActiveRecord::Base
   scope :approved, -> { where(status: 'approved') }
   scope :for_slug, ->(slug) { where(post_slug: slug) }
 
-  # Build-hook firing is deliberately kept OUT of callbacks: a raising
-  # `after_update` would roll back the status change. Callers fire the hook.
   def approve!
     update!(status: 'approved')
   end
@@ -31,8 +26,6 @@ class Comment < ActiveRecord::Base
     update!(status: 'rejected')
   end
 
-  # Explicit allow-list of fields safe to serve publicly — never the token,
-  # ip_address, user_agent, or status.
   def public_attributes
     {
       author_name: author_name,
