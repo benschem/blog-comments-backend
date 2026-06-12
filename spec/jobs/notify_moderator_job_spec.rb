@@ -9,13 +9,13 @@ RSpec.describe NotifyModeratorJob do
 
   describe '#perform' do
     it 'sends the moderation email for the comment' do
-      allow(ResendNotifier).to receive(:notify)
+      allow(ModerationEmail).to receive(:deliver_for)
       job.perform(comment)
-      expect(ResendNotifier).to have_received(:notify).with(comment)
+      expect(ModerationEmail).to have_received(:deliver_for).with(comment)
     end
 
-    context 'when the notifier raises' do
-      before { allow(ResendNotifier).to receive(:notify).and_raise(StandardError, 'mail down') }
+    context 'when the email send raises' do
+      before { allow(ModerationEmail).to receive(:deliver_for).and_raise(StandardError, 'mail down') }
 
       it 'swallows the error so a failed send never crashes the worker' do
         expect { job.perform(comment) }.not_to raise_error

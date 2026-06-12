@@ -10,8 +10,9 @@ RSpec.describe 'Comments API', type: :request do
     end
 
     # Stub the moderation email everywhere so no real send is attempted and we
-    # can assert on whether the seam was reached.
-    before { allow(ResendNotifier).to receive(:notify) }
+    # can assert on whether the seam was reached. The submit enqueues a job that
+    # runs inline in tests (see spec/support/sucker_punch.rb) and calls this.
+    before { allow(ModerationEmail).to receive(:deliver_for) }
 
     context 'with valid params' do
       before { post '/comments', valid_params }
@@ -28,7 +29,7 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       it 'notifies the moderator' do
-        expect(ResendNotifier).to have_received(:notify).with(Comment.last)
+        expect(ModerationEmail).to have_received(:deliver_for).with(Comment.last)
       end
 
       it 'never echoes the moderation token' do
@@ -56,7 +57,7 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       it 'sends no email' do
-        expect(ResendNotifier).not_to have_received(:notify)
+        expect(ModerationEmail).not_to have_received(:deliver_for)
       end
 
       it 'responds with a success-looking 200' do
@@ -81,13 +82,13 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       it 'does not notify the moderator' do
-        expect(ResendNotifier).not_to have_received(:notify)
+        expect(ModerationEmail).not_to have_received(:deliver_for)
       end
     end
 
     context 'when the notifier raises' do
       before do
-        allow(ResendNotifier).to receive(:notify).and_raise(StandardError, 'mail down')
+        allow(ModerationEmail).to receive(:deliver_for).and_raise(StandardError, 'mail down')
         post '/comments', valid_params
       end
 
