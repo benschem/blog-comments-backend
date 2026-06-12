@@ -1,18 +1,11 @@
 # frozen_string_literal: true
 
-# Public comment endpoints: accept a submission (held for moderation) and serve
-# a post's already-approved comments. Reopens the modular `App` (defined in
-# app.rb) to register these routes and their helpers.
-class App < Sinatra::Base
-  # A submission always looks successful from the outside: the same minimal body
-  # is returned whether the comment was stored (201) or silently dropped as
-  # honeypot spam (200), so a bot learns nothing from the response.
+# Public comment endpoints: accept comments (held for moderation) and serve a
+# post's already-approved comments.
+class CommentsController < BaseController
   PENDING_JSON = { status: 'pending' }.to_json
 
   helpers do
-    # Only the fields a commenter may set, plus the request metadata we capture
-    # server-side. `status` is intentionally absent — the DB defaults it to
-    # `pending`, so a forged `status=approved` param can never take effect.
     def submitted_comment_attributes
       {
         post_slug: params[:post_slug],
@@ -25,29 +18,23 @@ class App < Sinatra::Base
       }
     end
 
-    # Hand the moderation email to a background worker so the commenter's 201
-    # isn't blocked on the Resend round-trip. Delivery is best-effort: failures
-    # are logged and swallowed inside NotifyModeratorJob, with the CLI
-    # `comments:pending` digest as the durable backstop (sucker_punch's queue is
-    # in-memory, so a job lost to a restart is not retried).
     def notify_moderator(comment)
       NotifyModeratorJob.perform_async(comment)
     end
+
+    def honeypot_tripped?
+      params[:homepage].present?
+    end
   end
 
-  # Accept a new comment. Spam defence is layered in front of this: the 413 body
-  # guard and per-IP rack-attack throttle (app.rb), then the CSS-hidden `homepage`
-  # honeypot below. Real submissions are stored `pending` and the moderator mailed.
+  # Accept a new comment
   post '/comments' do
     content_type :json
 
-    # Honeypot tripped: feign success, persist nothing, email no one. Log it (with
-    # the IP) so the dropped spam is still visible — useful for spotting abusive
-    # sources even though we never store the row.
-    if params[:homepage].present?
+    if honeypot_tripped?
       warn "[POST /comments] honeypot tripped from #{request.ip} " \
            "on #{params[:post_slug].inspect}; dropping the submission"
-      halt 200, PENDING_JSON
+      halt 200, PENDING_JSON # Feign success, persist nothing, email no one
     end
 
     comment = Comment.new(submitted_comment_attributes)
@@ -62,8 +49,8 @@ class App < Sinatra::Base
     end
   end
 
-  # Serve a post's approved comments, oldest first, public fields only — this is
-  # what the static site fetches at build time.
+  # Serve a post's approved comments, oldest first, public fields only
+  # What the static site fetches at build time
   get '/comments' do
     content_type :json
     comments = Comment.approved.for_slug(params[:post_slug]).order(:created_at, :id)

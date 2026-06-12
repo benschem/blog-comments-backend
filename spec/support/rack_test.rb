@@ -2,10 +2,11 @@
 
 require 'rack/test'
 
-# Rack::Test::Methods needs an `app` to drive; point it at the modular App.
+# Rack::Test::Methods needs an `app` to drive; point it at the assembled stack
+# (defined in app.rb) so specs exercise the same middleware pipeline as production.
 module RackTestHelpers
   def app
-    App
+    RackApp
   end
 end
 

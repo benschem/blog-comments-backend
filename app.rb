@@ -4,29 +4,39 @@ require 'bundler/setup'
 Bundler.require(:default, ENV['RACK_ENV'] || :development)
 
 require 'dotenv/load'
+require 'rack'
 require 'sinatra/base'
 require 'sinatra/activerecord'
 require 'active_support/cache'
 
+# Middleware
 require_relative 'app/middleware/reject_oversize_requests'
+
+# Config
 require_relative 'config/rack_attack'
 
-class App < Sinatra::Base
-  register Sinatra::ActiveRecordExtension
-  set :database_file, 'config/database.yml'
+# Models
+require_relative 'app/models/comment'
 
-  set :protection, except: [:http_origin] # Allow cross-origin POSTs
+# Lib
+require_relative 'lib/netlify_build_hook'
 
-  use RejectOversizeRequests
-  use Rack::Attack
-end
-
-Dir[File.join(__dir__, 'app/models/*.rb')].each { require it }
-Dir[File.join(__dir__, 'lib/*.rb')].each { require it }
-
+# Mail
 require_relative 'mailer/app_mailer'
 require_relative 'mailer/mail_helpers'
 require_relative 'mailer/mail/moderation_email'
 
-Dir[File.join(__dir__, 'app/jobs/*.rb')].each { require it }
-Dir[File.join(__dir__, 'app/controllers/*.rb')].each { require it }
+# Jobs
+require_relative 'app/jobs/notify_moderator_job'
+
+# Controllers
+require_relative 'app/controllers/base_controller'
+require_relative 'app/controllers/comments_controller'
+require_relative 'app/controllers/moderation_controller'
+
+RackApp = Rack::Builder.new do
+  use RejectOversizeRequests
+  use Rack::Attack
+  use CommentsController
+  run ModerationController
+end.to_app
