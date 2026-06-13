@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe 'Moderation', type: :request do
-  subject(:comment) { create(:comment) }
+  let(:comment) { create(:comment) }
 
   describe 'GET /moderate/:token' do
     before { get "/moderate/#{token}" }
