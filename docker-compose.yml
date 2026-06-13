@@ -1,0 +1,25 @@
+# Standalone stack reached only via the host over 127.0.0.1 — no shared docker network
+services:
+  comments:
+    build:
+      context: .
+    image: blog-comments-backend
+    container_name: blog-comments
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "127.0.0.1:9292:9292" # loopback-only: only the host reverse proxy can reach it
+    volumes:
+      - ./db:/app/db # persists comments_prod.sqlite3 (+ -wal/-shm)
+    healthcheck:
+      # /up does a SELECT 1; probe with Ruby's stdlib so there's no extra dependency.
+      test: ["CMD", "ruby", "-e", "require 'net/http'; exit(Net::HTTP.get_response(URI('http://127.0.0.1:9292/up')).code == '200' ? 0 : 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s # let db:migrate + boot finish before the first probe
+    deploy:
+      resources:
+        limits:
+          memory: 256M

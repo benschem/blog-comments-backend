@@ -3,7 +3,7 @@
 require 'bundler/setup'
 Bundler.require(:default, ENV['RACK_ENV'] || :development)
 
-require 'dotenv/load'
+require 'dotenv/load' unless ENV['RACK_ENV'] == 'production'
 require 'rack'
 require 'sinatra/base'
 require 'sinatra/activerecord'

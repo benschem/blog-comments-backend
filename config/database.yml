@@ -9,6 +9,15 @@ default: &default
   adapter: sqlite3
   pool: 5 # matches Puma's default thread count
   timeout: 5000 # concurrent writes wait instead of complaining "database is locked"
+  # Applied per-connection by the sqlite3 adapter (AR 7.1+).
+  pragmas:
+    # WAL: readers and the single writer no longer block each other
+    journal_mode: WAL
+    # NORMAL: fsync only at checkpoints, not every commit - much faster, never corrupts
+    # a power cut (not an app restart) can lose the last few committed writes, acceptable here
+    synchronous: NORMAL
+    # SQLite doesn't enforce foreign keys unless asked per-connection - on for future tables
+    foreign_keys: true
 
 development:
   <<: *default
