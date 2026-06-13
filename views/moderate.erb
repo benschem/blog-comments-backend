@@ -27,5 +27,8 @@
   <form method="post" action="/moderate/<%= @comment.moderation_token %>/reject" style="display:inline">
     <button type="submit">Reject</button>
   </form>
+  <form method="post" action="/moderate/<%= @comment.moderation_token %>/mark_spam" style="display:inline">
+    <button type="submit">Mark spam</button>
+  </form>
 </body>
 </html>

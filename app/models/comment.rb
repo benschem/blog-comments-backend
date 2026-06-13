@@ -26,6 +26,10 @@ class Comment < ActiveRecord::Base
     update!(status: 'rejected')
   end
 
+  def mark_spam!
+    update!(status: 'spam')
+  end
+
   def public_attributes
     {
       author_name: author_name,

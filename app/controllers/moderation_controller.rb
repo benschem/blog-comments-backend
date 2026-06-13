@@ -5,7 +5,8 @@ class ModerationController < BaseController
   MODERATION_ROUTES = [
     '/moderate/:token',
     '/moderate/:token/approve',
-    '/moderate/:token/reject'
+    '/moderate/:token/reject',
+    '/moderate/:token/mark_spam'
   ].freeze
 
   helpers do
@@ -41,6 +42,11 @@ class ModerationController < BaseController
 
   post '/moderate/:token/reject' do
     @comment.reject!
+    redirect to("/moderate/#{@comment.moderation_token}")
+  end
+
+  post '/moderate/:token/mark_spam' do
+    @comment.mark_spam!
     redirect to("/moderate/#{@comment.moderation_token}")
   end
 end

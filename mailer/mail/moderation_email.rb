@@ -28,7 +28,7 @@ class ModerationEmail
       <h2>New comment on #{escape_html comment.post_slug}</h2>
       <p><strong>#{escape_html comment.author_name}</strong>#{role_html(comment)}#{website_html(comment)}</p>
       <blockquote>#{escape_html comment.body}</blockquote>
-      <p><a href="#{escape_html link}">Review, approve or reject this comment</a></p>
+      <p><a href="#{escape_html link}">Moderate this comment</a></p>
     HTML
   end
 

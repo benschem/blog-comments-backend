@@ -19,10 +19,12 @@ RSpec.describe 'Moderation', type: :request do
         expect(comment.reload.status).to eq('pending')
       end
 
-      it 'renders the approve and reject forms' do
-        expect(last_response.body)
-          .to include("/moderate/#{comment.moderation_token}/approve")
-          .and include("/moderate/#{comment.moderation_token}/reject")
+      it 'renders the approve, reject and mark spam forms' do
+        aggregate_failures do
+          expect(last_response.body).to include("/moderate/#{comment.moderation_token}/approve")
+          expect(last_response.body).to include("/moderate/#{comment.moderation_token}/reject")
+          expect(last_response.body).to include("/moderate/#{comment.moderation_token}/mark_spam")
+        end
       end
     end
 
@@ -88,7 +90,7 @@ RSpec.describe 'Moderation', type: :request do
         expect(last_response).to be_not_found
       end
 
-      it 'triggers no build hook' do
+      it 'does not trigger the build hook' do
         expect(NetlifyBuildHook).not_to have_received(:trigger)
       end
     end
@@ -107,7 +109,7 @@ RSpec.describe 'Moderation', type: :request do
         expect(comment.reload.status).to eq('rejected')
       end
 
-      it 'triggers no build hook' do
+      it 'does not trigger the build hook' do
         expect(NetlifyBuildHook).not_to have_received(:trigger)
       end
 
@@ -119,6 +121,43 @@ RSpec.describe 'Moderation', type: :request do
       it 'shows the updated status after following the redirect' do
         follow_redirect!
         expect(last_response.body).to include('rejected')
+      end
+    end
+
+    context 'with an unknown token' do
+      let(:token) { 'does-not-exist' }
+
+      it 'responds 404' do
+        expect(last_response).to be_not_found
+      end
+    end
+  end
+
+  describe 'POST /moderate/:token/mark_spam' do
+    before do
+      allow(NetlifyBuildHook).to receive(:trigger)
+      post "/moderate/#{token}/mark_spam"
+    end
+
+    context 'with a known token' do
+      let(:token) { comment.moderation_token }
+
+      it 'marks the comment as spam' do
+        expect(comment.reload.status).to eq('spam')
+      end
+
+      it 'does not trigger the build hook' do
+        expect(NetlifyBuildHook).not_to have_received(:trigger)
+      end
+
+      it 'redirects back to the review page' do
+        expect(last_response)
+          .to be_redirect.and have_attributes(location: end_with("/moderate/#{token}"))
+      end
+
+      it 'shows the updated status after following the redirect' do
+        follow_redirect!
+        expect(last_response.body).to include('spam')
       end
     end
 
