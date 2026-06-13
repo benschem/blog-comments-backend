@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+# Turn off rackup's own dev-only Rack::CommonLogger so it doesn't double up logs
+exec bundle exec rackup -q "$@"
