@@ -72,6 +72,38 @@ RSpec.describe 'Comments API', type: :request do
       end
     end
 
+    context 'when the content scores as spam' do
+      let(:spam_params) do
+        valid_params.merge(
+          author_name: 'SEO Expert',
+          body: 'I visited your site. Our SEO services boost your ranking with quality backlinks. ' \
+                'Buy now at https://cheap-pills.xyz/ for guaranteed returns.'
+        )
+      end
+
+      before do
+        allow(AppLogger).to receive(:info)
+        post '/comments', spam_params
+      end
+
+      it 'stores the comment as spam for triage' do
+        expect(Comment.last.status).to eq('spam')
+      end
+
+      it 'sends no email' do
+        expect(ModerationEmail).not_to have_received(:deliver_for)
+      end
+
+      it 'responds identically to a pending accept so the bot learns nothing', :aggregate_failures do
+        expect(last_response).to be_created
+        expect(JSON.parse(last_response.body)).to eq('status' => 'pending')
+      end
+
+      it 'logs the auto-classification at info level' do
+        expect(AppLogger).to have_received(:info).with(/spam/i)
+      end
+    end
+
     context 'with invalid params' do
       before { post '/comments', valid_params.merge(body: '') }
 

@@ -18,6 +18,7 @@ require_relative 'config/app_config'
 require_relative 'config/rack_attack'
 
 # Models
+require_relative 'app/models/concerns/spam_detection'
 require_relative 'app/models/comment'
 
 # Lib

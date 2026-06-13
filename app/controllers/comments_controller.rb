@@ -40,7 +40,14 @@ class CommentsController < BaseController
     comment = Comment.new(submitted_comment_attributes)
 
     if comment.save
-      notify_moderator(comment)
+      # Auto-classified spam is stored for triage but never emailed or published.
+      # The response is identical to a real pending accept so the bot learns nothing.
+      if comment.spam?
+        AppLogger.info "[POST /comments] auto-classified spam from #{request.ip} " \
+                       "on #{params[:post_slug].inspect}; stored, not notifying"
+      else
+        notify_moderator(comment)
+      end
       status 201
       PENDING_JSON
     else

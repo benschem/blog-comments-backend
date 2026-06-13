@@ -2,6 +2,8 @@
 
 # A single blog comment.
 class Comment < ActiveRecord::Base
+  include SpamDetection
+
   STATUSES = %w[pending approved spam rejected].freeze
 
   has_secure_token :moderation_token
@@ -19,6 +21,7 @@ class Comment < ActiveRecord::Base
   scope :for_slug, ->(slug) { where(post_slug: slug) }
   scope :pending, -> { where(status: 'pending') }
   scope :still_pending_after, ->(age) { pending.where(created_at: ..age.ago).order(:created_at) }
+  scope :pending, -> { where(status: 'pending') }
 
   def approve!
     update!(status: 'approved')
@@ -30,6 +33,10 @@ class Comment < ActiveRecord::Base
 
   def mark_spam!
     update!(status: 'spam')
+  end
+
+  def spam?
+    status == 'spam'
   end
 
   def public_attributes
