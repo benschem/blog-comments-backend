@@ -26,7 +26,7 @@ end
 RSpec.configure do |config|
   config.before(:suite) do
     Rake.application = Rake::Application.new
-    Rake.application.init
+    Rake.application.init('rake', []) # Explicitly pass an empty ARGV
     Rake.application.load_rakefile
   end
 
