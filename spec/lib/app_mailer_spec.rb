@@ -33,12 +33,14 @@ RSpec.describe AppMailer do
     end
 
     context 'when Resend raises' do
-      before { allow(Resend::Emails).to receive(:send).and_raise(Resend::Error.new('boom')) }
+      before do
+        allow(Resend::Emails).to receive(:send).and_raise(Resend::Error.new('boom'))
+        allow(AppLogger).to receive(:error)
+      end
 
-      it 'logs loudly and re-raises so the failure is never silent' do
-        expect { described_class.deliver(email, config:) }
-          .to raise_error(Resend::Error)
-          .and output(/AppMailer/).to_stderr
+      it 'logs at error level and re-raises so the failure is never silent', :aggregate_failures do
+        expect { described_class.deliver(email, config:) }.to raise_error(Resend::Error)
+        expect(AppLogger).to have_received(:error).with(/AppMailer/)
       end
     end
 
@@ -48,12 +50,12 @@ RSpec.describe AppMailer do
       before do
         stub_const('AppMailer::TIMEOUT_SECONDS', 0.05)
         allow(Resend::Emails).to receive(:send) { sleep 1 }
+        allow(AppLogger).to receive(:error)
       end
 
-      it 'aborts with a Timeout::Error rather than hanging, logged and re-raised' do
-        expect { described_class.deliver(email, config:) }
-          .to raise_error(Timeout::Error)
-          .and output(/AppMailer/).to_stderr
+      it 'aborts with a Timeout::Error rather than hanging, logged and re-raised', :aggregate_failures do
+        expect { described_class.deliver(email, config:) }.to raise_error(Timeout::Error)
+        expect(AppLogger).to have_received(:error).with(/AppMailer/)
       end
     end
   end

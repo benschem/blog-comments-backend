@@ -32,8 +32,8 @@ class CommentsController < BaseController
     content_type :json
 
     if honeypot_tripped?
-      warn "[POST /comments] honeypot tripped from #{request.ip} " \
-           "on #{params[:post_slug].inspect}; dropping the submission"
+      AppLogger.info "[POST /comments] honeypot tripped from #{request.ip} " \
+                     "on #{params[:post_slug].inspect}; dropping the submission"
       halt 200, PENDING_JSON # Feign success, persist nothing, email no one
     end
 

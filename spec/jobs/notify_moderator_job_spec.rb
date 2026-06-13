@@ -15,14 +15,18 @@ RSpec.describe NotifyModeratorJob do
     end
 
     context 'when the email send raises' do
-      before { allow(ModerationEmail).to receive(:deliver_for).and_raise(StandardError, 'mail down') }
+      before do
+        allow(ModerationEmail).to receive(:deliver_for).and_raise(StandardError, 'mail down')
+        allow(AppLogger).to receive(:error)
+      end
 
       it 'swallows the error so a failed send never crashes the worker' do
         expect { job.perform(comment) }.not_to raise_error
       end
 
-      it 'logs the failure for visibility' do
-        expect { job.perform(comment) }.to output(/NotifyModeratorJob.*mail down/m).to_stderr
+      it 'logs the failure at error level for visibility' do
+        job.perform(comment)
+        expect(AppLogger).to have_received(:error).with(/NotifyModeratorJob.*mail down/m)
       end
     end
   end

@@ -23,6 +23,8 @@ RSpec.describe RejectOversizeRequests do
     context 'when the body exceeds the limit' do
       let(:oversized) { described_class::MAX_REQUEST_BYTES + 1 }
 
+      before { allow(AppLogger).to receive(:info) }
+
       it 'rejects it with a 413 before reaching the app', :aggregate_failures do
         status, headers, body = middleware.call(env_with_length(oversized))
         expect(status).to eq(413)
@@ -30,9 +32,9 @@ RSpec.describe RejectOversizeRequests do
         expect(headers).to include('content-type' => 'text/plain')
       end
 
-      it 'logs the rejection with request context' do
-        expect { middleware.call(env_with_length(oversized)) }
-          .to output(/rejected oversized body/).to_stderr
+      it 'logs the rejection at info level with request context' do
+        middleware.call(env_with_length(oversized))
+        expect(AppLogger).to have_received(:info).with(/rejected oversized body/)
       end
     end
   end

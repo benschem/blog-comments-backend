@@ -9,6 +9,6 @@ class NotifyModeratorJob
   def perform(comment)
     ModerationEmail.deliver_for(comment)
   rescue StandardError => e
-    warn "[NotifyModeratorJob] moderation email failed for ##{comment.id}: #{e.class}: #{e.message}"
+    AppLogger.error "[NotifyModeratorJob] moderation email failed for ##{comment.id}: #{e.class}: #{e.message}"
   end
 end

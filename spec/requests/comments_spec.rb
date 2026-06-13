@@ -50,7 +50,10 @@ RSpec.describe 'Comments API', type: :request do
     context 'when the honeypot is filled' do
       let(:honeypot_params) { valid_params.merge(homepage: 'http://spam.example') }
 
-      before { post '/comments', honeypot_params }
+      before do
+        allow(AppLogger).to receive(:info)
+        post '/comments', honeypot_params
+      end
 
       it 'persists no comment' do
         expect(Comment.count).to eq(0)
@@ -64,8 +67,8 @@ RSpec.describe 'Comments API', type: :request do
         expect(last_response).to be_ok
       end
 
-      it 'logs the dropped submission' do
-        expect { post '/comments', honeypot_params }.to output(/honeypot/i).to_stderr
+      it 'logs the dropped submission at info level' do
+        expect(AppLogger).to have_received(:info).with(/honeypot/i)
       end
     end
 

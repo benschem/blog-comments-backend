@@ -22,7 +22,7 @@ class AppMailer
       Resend::Emails.send(email)
     end
   rescue StandardError => e
-    warn "[AppMailer] failed to send `#{email[:subject]}` to #{email[:to]}: #{e.class}: #{e.message}"
+    AppLogger.error "[AppMailer] failed to send `#{email[:subject]}` to #{email[:to]}: #{e.class}: #{e.message}"
     raise
   end
 end

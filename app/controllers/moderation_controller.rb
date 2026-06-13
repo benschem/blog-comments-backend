@@ -17,7 +17,7 @@ class ModerationController < BaseController
     def rebuild_static_site
       NetlifyBuildHook.trigger
     rescue StandardError => e
-      warn "[POST /moderate approve] Build hook failed for ##{@comment.id}: #{e.class}: #{e.message}"
+      AppLogger.warn "[POST /moderate approve] Build hook failed for ##{@comment.id}: #{e.class}: #{e.message}"
     end
   end
 

@@ -12,7 +12,7 @@ class RejectOversizeRequests
     req = Rack::Request.new(env)
 
     if oversized?(req)
-      warn log_message(req)
+      AppLogger.info log_message(req)
       return [413, { 'content-type' => 'text/plain' }, ['Payload Too Large']]
     end
 

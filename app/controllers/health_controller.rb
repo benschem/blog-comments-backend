@@ -8,7 +8,7 @@ class HealthController < BaseController
     begin
       Comment.connection.select_value('SELECT 1')
     rescue StandardError => e
-      warn "[GET /up] database check failed: #{e.class}: #{e.message}"
+      AppLogger.error "[GET /up] database check failed: #{e.class}: #{e.message}"
       halt 503, { status: 'error' }.to_json
     end
 
