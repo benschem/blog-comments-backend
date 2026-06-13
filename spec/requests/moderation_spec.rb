@@ -52,6 +52,16 @@ RSpec.describe 'Moderation', type: :request do
         it 'triggers the build hook' do
           expect(NetlifyBuildHook).to have_received(:trigger)
         end
+
+        it 'redirects back to the review page' do
+          expect(last_response)
+            .to be_redirect.and have_attributes(location: end_with("/moderate/#{token}"))
+        end
+
+        it 'shows the updated status after following the redirect' do
+          follow_redirect!
+          expect(last_response.body).to include('approved')
+        end
       end
 
       context 'when the build hook fails' do
@@ -99,6 +109,16 @@ RSpec.describe 'Moderation', type: :request do
 
       it 'triggers no build hook' do
         expect(NetlifyBuildHook).not_to have_received(:trigger)
+      end
+
+      it 'redirects back to the review page' do
+        expect(last_response)
+          .to be_redirect.and have_attributes(location: end_with("/moderate/#{token}"))
+      end
+
+      it 'shows the updated status after following the redirect' do
+        follow_redirect!
+        expect(last_response.body).to include('rejected')
       end
     end
 

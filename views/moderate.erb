@@ -1,0 +1,31 @@
+<%# Review page for a single comment. Kept tiny and noindex; every %>
+<%# user-controlled field is HTML-escaped via `escape_html` (free-text body). %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex"> <!--This page is not public-->
+  <title>Moderate comment</title>
+</head>
+<body>
+  <h1>Comment on <%= escape_html @comment.post_slug %></h1>
+  <p>
+    <strong><%= escape_html @comment.author_name %></strong>
+      &mdash; <%= escape_html(@comment.author_role) if @comment.author_role.present? %>
+      (<%= escape_html(@comment.author_website) if @comment.author_website.present? %>)
+  </p>
+  <blockquote>
+    <%= escape_html @comment.body %>
+  </blockquote>
+  <p>
+    Current status: <strong><%= escape_html @comment.status %></strong>
+  </p>
+  <form method="post" action="/moderate/<%= @comment.moderation_token %>/approve" style="display:inline">
+    <button type="submit">Approve</button>
+  </form>
+  <form method="post" action="/moderate/<%= @comment.moderation_token %>/reject" style="display:inline">
+    <button type="submit">Reject</button>
+  </form>
+</body>
+</html>
