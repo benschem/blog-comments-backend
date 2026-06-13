@@ -23,3 +23,10 @@ services:
       resources:
         limits:
           memory: 256M
+    logging:
+      # Cap stdout/stderr on disk so logs can't fill the shared VPS
+      # ~30 MB total (3 × 10 MB), then oldest rotates out
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
