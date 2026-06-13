@@ -31,10 +31,12 @@ require_relative 'app/jobs/notify_moderator_job'
 
 # Controllers
 require_relative 'app/controllers/base_controller'
+require_relative 'app/controllers/health_controller'
 require_relative 'app/controllers/comments_controller'
 require_relative 'app/controllers/moderation_controller'
 
 RackApp = Rack::Builder.new do
+  use HealthController
   use RejectOversizeRequests
   use Rack::Attack
   use CommentsController
