@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source 'https://rubygems.org', cooldown: 7 # Avoid compromised packages
 
 # Single source of truth for the Ruby version: read .ruby-version so Bundler,
 # rbenv, and the Dockerfile all agree on the same number.
