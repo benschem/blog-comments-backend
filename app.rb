@@ -27,6 +27,7 @@ require_relative 'lib/netlify_build_hook'
 require_relative 'mailer/app_mailer'
 require_relative 'mailer/mail_helpers'
 require_relative 'mailer/mail/moderation_email'
+require_relative 'mailer/mail/pending_alert_email'
 
 # Jobs
 require_relative 'app/jobs/notify_moderator_job'

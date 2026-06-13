@@ -17,6 +17,8 @@ class Comment < ActiveRecord::Base
 
   scope :approved, -> { where(status: 'approved') }
   scope :for_slug, ->(slug) { where(post_slug: slug) }
+  scope :pending, -> { where(status: 'pending') }
+  scope :still_pending_after, ->(age) { pending.where(created_at: ..age.ago).order(:created_at) }
 
   def approve!
     update!(status: 'approved')
