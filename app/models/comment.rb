@@ -18,10 +18,11 @@ class Comment < ActiveRecord::Base
             allow_blank: true
 
   scope :approved, -> { where(status: 'approved') }
+  scope :spam, -> { where(status: 'spam') }
   scope :for_slug, ->(slug) { where(post_slug: slug) }
   scope :pending, -> { where(status: 'pending') }
   scope :still_pending_after, ->(age) { pending.where(created_at: ..age.ago).order(:created_at) }
-  scope :pending, -> { where(status: 'pending') }
+  scope :spam_since, ->(time) { spam.where(created_at: time..).order(created_at: :desc) }
 
   def approve!
     update!(status: 'approved')

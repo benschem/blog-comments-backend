@@ -6,29 +6,152 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex"> <!--This page is not public-->
+  <meta name="color-scheme" content="light dark"> <!--Honour the OS theme, no flash-->
   <title>Moderate comment</title>
+  <style>
+    /* Palette in OKLCH; light-dark() resolves each token to the OS theme (set via
+       color-scheme on :root). Perceptually-uniform lightness keeps both modes balanced. */
+    :root {
+      color-scheme: light dark;
+
+      --bg:     light-dark(oklch(97% 0.004 255), oklch(21% 0.012 260));
+      --card:   light-dark(oklch(100% 0 0),      oklch(25% 0.014 260));
+      --ink:    light-dark(oklch(26% 0.02 260),  oklch(93% 0.01 260));
+      --muted:  light-dark(oklch(52% 0.02 260),  oklch(69% 0.016 260));
+      --line:   light-dark(oklch(90% 0.008 260), oklch(34% 0.016 260));
+      --accent: light-dark(oklch(55% 0.17 255),  oklch(72% 0.13 255));
+
+      --approve: oklch(58% 0.13 150);
+      --reject:  light-dark(oklch(50% 0.02 260), oklch(58% 0.02 260));
+      --spam:    oklch(62% 0.14 65);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: flex;
+      justify-content: center;
+      padding: clamp(1.5rem, 5vw, 3rem) 1.25rem;
+      background: var(--bg);
+      color: var(--ink);
+      font: 1rem/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      inline-size: 100%;
+      max-inline-size: 40rem;
+      block-size: fit-content;
+      padding: clamp(1.25rem, 4vw, 2rem);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 1px 2px oklch(0% 0 0 / 0.05), 0 10px 30px oklch(0% 0 0 / 0.07);
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: clamp(1.15rem, 3vw, 1.4rem);
+      line-height: 1.2;
+      text-wrap: balance;
+    }
+    .post { color: var(--accent); }
+
+    .byline {
+      margin-block: 0.35rem 1.25rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-wrap: pretty;
+    }
+    .byline a { color: var(--accent); }
+
+    blockquote {
+      margin: 0 0 1.25rem;
+      padding: 0.9rem 1.1rem;
+      background: color-mix(in oklch, var(--accent) 7%, var(--card));
+      border-inline-start: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      text-wrap: pretty;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.5rem;
+      margin-block-end: 1.5rem;
+      padding-block-start: 1rem;
+      border-block-start: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .meta strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .actions form { margin: 0; }
+
+    /* Each button supplies its own --btn; one hover rule mixes it toward black in
+       light mode and toward white in dark mode, so the feedback reads correctly in both. */
+    button {
+      --btn: var(--reject);
+      font: inherit;
+      font-weight: 600;
+      color: oklch(100% 0 0);
+      background: var(--btn);
+      border: 0;
+      border-radius: 9px;
+      padding: 0.6rem 1.15rem;
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+    .approve { --btn: var(--approve); }
+    .spam    { --btn: var(--spam); }
+
+    button:hover  { background: color-mix(in oklch, var(--btn), light-dark(black, white) 14%); }
+    button:active { transform: translateY(1px); }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button:focus-visible { outline-offset: 3px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      button { transition: none; }
+      button:active { transform: none; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Comment on <%= escape_html @comment.post_slug %></h1>
-  <p>
-    <strong><%= escape_html @comment.author_name %></strong>
-      &mdash; <%= escape_html(@comment.author_role) if @comment.author_role.present? %>
-      (<%= escape_html(@comment.author_website) if @comment.author_website.present? %>)
-  </p>
-  <blockquote>
-    <%= escape_html @comment.body %>
-  </blockquote>
-  <p>
-    Current status: <strong><%= escape_html @comment.status %></strong>
-  </p>
-  <form method="post" action="/moderate/<%= @comment.moderation_token %>/approve" style="display:inline">
-    <button type="submit">Approve</button>
-  </form>
-  <form method="post" action="/moderate/<%= @comment.moderation_token %>/reject" style="display:inline">
-    <button type="submit">Reject</button>
-  </form>
-  <form method="post" action="/moderate/<%= @comment.moderation_token %>/mark_spam" style="display:inline">
-    <button type="submit">Mark spam</button>
-  </form>
+  <main>
+    <h1>Comment on <span class="post"><%= escape_html @comment.post_slug %></span></h1>
+    <p class="byline">
+      <strong><%= escape_html @comment.author_name %></strong><%
+        %><% if @comment.author_role.present? %> &mdash; <%= escape_html @comment.author_role %><% end %><%
+        %><% if @comment.author_website.present? %>
+        &middot; <a href="<%= escape_html @comment.author_website %>" rel="nofollow ugc noopener" target="_blank"><%= escape_html @comment.author_website %></a><%
+      %><% end %>
+    </p>
+
+    <blockquote><%= escape_html @comment.body %></blockquote>
+
+    <div class="meta">
+      <span>Status: <strong><%= escape_html @comment.status %></strong></span>
+      <span>Spam score: <strong><%= format('%.1f', @comment.spam_score) %></strong> (threshold <%= format('%.1f', SpamDetection::SPAM_THRESHOLD) %>)</span>
+      <span>Submitted: <strong><%= @comment.created_at.strftime('%-d %b %Y, %H:%M') %></strong></span>
+    </div>
+
+    <div class="actions">
+      <form method="post" action="/moderate/<%= @comment.moderation_token %>/approve">
+        <button type="submit" class="approve">Approve</button>
+      </form>
+      <form method="post" action="/moderate/<%= @comment.moderation_token %>/reject">
+        <button type="submit" class="reject">Reject</button>
+      </form>
+      <form method="post" action="/moderate/<%= @comment.moderation_token %>/mark_spam">
+        <button type="submit" class="spam">Mark spam</button>
+      </form>
+    </div>
+  </main>
 </body>
 </html>

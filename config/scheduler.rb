@@ -10,12 +10,18 @@ module Scheduler
   # Twice daily, pinned to Sydney
   STALE_COMMENTS_CRON = '0 8,20 * * * Australia/Sydney'
 
+  # Weekly, Monday 9am Sydney — digest of recently auto-flagged spam to catch false positives
+  SPAM_DIGEST_CRON = '0 9 * * 1 Australia/Sydney'
+
   # Memoised so a stray second call can't start a duplicate thread, and so the
   # running scheduler stays referenced (avoid GC) for the life of the process
   def self.start
     @start ||= Rufus::Scheduler.new.tap do |scheduler|
       # Periodically sweep for stale comments and email any to moderator
       scheduler.cron(STALE_COMMENTS_CRON) { PendingAlertEmail.deliver_overdue }
+
+      # Weekly, surface auto-flagged spam so a false positive can still be approved
+      scheduler.cron(SPAM_DIGEST_CRON) { SpamDigestEmail.deliver_recent }
     end
   end
 end
