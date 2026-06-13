@@ -6,16 +6,13 @@ RSpec.describe AppMailer do
   # A ready-made envelope — AppMailer is pure transport and doesn't care what
   # built it (that's ModerationEmail's job).
   let(:email) { { from: 'comments@benschem.dev', to: 'ben@benschem.dev', subject: 'Hi', html: '<p>Hi</p>' } }
+  let(:config) { build_config_for_specs }
 
-  # The API key is read from ENV at call-time and set process-globally on Resend,
-  # so swap it in and restore both afterwards.
+  # Resend.api_key is a process-global on the gem, so restore it after each example.
   around do |example|
     original_api_key = Resend.api_key
-    original_env_key = ENV.fetch('RESEND_API_KEY', nil)
-    ENV['RESEND_API_KEY'] = 'test_key'
     example.run
   ensure
-    ENV['RESEND_API_KEY'] = original_env_key
     Resend.api_key = original_api_key
   end
 
@@ -23,7 +20,7 @@ RSpec.describe AppMailer do
     context 'when Resend accepts the email' do
       before do
         allow(Resend::Emails).to receive(:send).and_return({ id: 'email_1' })
-        described_class.deliver(email)
+        described_class.deliver(email, config:)
       end
 
       it 'hands the envelope straight to Resend' do
@@ -39,7 +36,7 @@ RSpec.describe AppMailer do
       before { allow(Resend::Emails).to receive(:send).and_raise(Resend::Error.new('boom')) }
 
       it 'logs loudly and re-raises so the failure is never silent' do
-        expect { described_class.deliver(email) }
+        expect { described_class.deliver(email, config:) }
           .to raise_error(Resend::Error)
           .and output(/AppMailer/).to_stderr
       end
@@ -54,7 +51,7 @@ RSpec.describe AppMailer do
       end
 
       it 'aborts with a Timeout::Error rather than hanging, logged and re-raised' do
-        expect { described_class.deliver(email) }
+        expect { described_class.deliver(email, config:) }
           .to raise_error(Timeout::Error)
           .and output(/AppMailer/).to_stderr
       end

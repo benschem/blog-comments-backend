@@ -7,13 +7,12 @@ require 'timeout'
 class AppMailer
   TIMEOUT_SECONDS = 10
 
-  def self.deliver(email)
-    new.deliver(email)
+  def self.deliver(email, config: AppConfig.current)
+    new(config).deliver(email)
   end
 
-  def initialize
-    # Fetches ENV at call-time so specs can swap the config cleanly
-    @api_key = ENV.fetch('RESEND_API_KEY', nil)
+  def initialize(config)
+    @api_key = config.resend_api_key
   end
 
   def deliver(email)

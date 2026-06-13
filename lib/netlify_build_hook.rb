@@ -9,8 +9,8 @@ module NetlifyBuildHook
 
   module_function
 
-  def trigger
-    uri = URI.parse(ENV.fetch('NETLIFY_BUILD_HOOK_URL'))
+  def trigger(config: AppConfig.current)
+    uri = URI.parse(config.netlify_build_hook_url)
 
     Net::HTTP.start(uri.host,
                     uri.port,

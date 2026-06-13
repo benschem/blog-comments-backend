@@ -2,45 +2,55 @@
 
 # The "new comment awaiting moderation" email
 class ModerationEmail
-  extend MailHelpers
+  include MailHelpers
 
-  def self.deliver_for(comment)
-    moderation_email = build_moderation_email(comment)
-    AppMailer.deliver(moderation_email)
+  def self.deliver_for(comment, config: AppConfig.current)
+    new(comment, config).deliver
   end
 
-  def self.build_moderation_email(comment)
+  def initialize(comment, config)
+    @comment = comment
+    @config = config
+  end
+
+  def deliver
+    AppMailer.deliver(envelope, config: @config)
+  end
+
+  private
+
+  def envelope
     {
-      from: ENV.fetch('RESEND_FROM_EMAIL'),
-      to: ENV.fetch('MODERATION_NOTIFY_EMAIL'),
-      subject: subject(comment),
-      html: html(comment)
+      from: @config.resend_from_email,
+      to: @config.moderation_notify_email,
+      subject: subject,
+      html: html
     }
   end
 
-  def self.subject(comment)
-    "New comment awaiting moderation on #{comment.post_slug}"
+  def subject
+    "New comment awaiting moderation on #{@comment.post_slug}"
   end
 
-  def self.html(comment)
-    link = "#{ENV.fetch('APP_BASE_URL')}/moderate/#{comment.moderation_token}"
+  def html
+    link = "#{@config.app_base_url}/moderate/#{@comment.moderation_token}"
     <<~HTML
-      <h2>New comment on #{escape_html comment.post_slug}</h2>
-      <p><strong>#{escape_html comment.author_name}</strong>#{role_html(comment)}#{website_html(comment)}</p>
-      <blockquote>#{escape_html comment.body}</blockquote>
+      <h2>New comment on #{escape_html @comment.post_slug}</h2>
+      <p><strong>#{escape_html @comment.author_name}</strong>#{role_html}#{website_html}</p>
+      <blockquote>#{escape_html @comment.body}</blockquote>
       <p><a href="#{escape_html link}">Moderate this comment</a></p>
     HTML
   end
 
-  def self.role_html(comment)
-    return '' if comment.author_role.blank?
+  def role_html
+    return '' if @comment.author_role.blank?
 
-    " &mdash; #{escape_html comment.author_role}"
+    " &mdash; #{escape_html @comment.author_role}"
   end
 
-  def self.website_html(comment)
-    return '' if comment.author_website.blank?
+  def website_html
+    return '' if @comment.author_website.blank?
 
-    " (#{escape_html comment.author_website})"
+    " (#{escape_html @comment.author_website})"
   end
 end

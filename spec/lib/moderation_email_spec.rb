@@ -11,27 +11,17 @@ RSpec.describe ModerationEmail do
           moderation_token: 'tok_abc123')
   end
 
-  # The envelope reads ENV at call-time, so swap in known config and restore it.
-  around do |example|
-    original_env = ENV.to_hash
-    ENV.update(
-      'APP_BASE_URL' => 'https://comments.benschem.dev',
-      'RESEND_FROM_EMAIL' => 'comments@benschem.dev',
-      'MODERATION_NOTIFY_EMAIL' => 'ben@benschem.dev'
-    )
-    example.run
-  ensure
-    ENV.replace(original_env)
-  end
+  let(:config) { build_config_for_specs }
 
   describe '.deliver_for' do
-    # Capture the envelope handed to the transport instead of sending for real.
+    # Capture the envelope handed to the transport instead of sending for real
+    # (the trailing `**` swallows the config keyword deliver_for passes through).
     let(:email) { {} }
 
-    before { allow(AppMailer).to receive(:deliver) { |params| email.merge!(params) } }
+    before { allow(AppMailer).to receive(:deliver) { |params, **| email.merge!(params) } }
 
     context 'with a typical comment' do
-      before { described_class.deliver_for(comment) }
+      before { described_class.deliver_for(comment, config:) }
 
       it 'addresses the moderation inbox with a subject naming the post', :aggregate_failures do
         expect(email).to include(from: 'comments@benschem.dev', to: 'ben@benschem.dev')
@@ -49,7 +39,7 @@ RSpec.describe ModerationEmail do
     context 'with HTML in the comment body' do
       let(:comment) { build(:comment, body: '<script>alert(1)</script>', moderation_token: 'tok_x') }
 
-      before { described_class.deliver_for(comment) }
+      before { described_class.deliver_for(comment, config:) }
 
       it 'escapes HTML in the body', :aggregate_failures do
         expect(email[:html]).to include('&lt;script&gt;')
@@ -58,7 +48,7 @@ RSpec.describe ModerationEmail do
     end
 
     context 'with optional author metadata' do
-      before { described_class.deliver_for(comment) }
+      before { described_class.deliver_for(comment, config:) }
 
       context 'when the role and website are present' do
         let(:comment) { build(:comment, author_role: 'Staff Engineer', author_website: 'https://ada.example') }

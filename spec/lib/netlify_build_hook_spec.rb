@@ -3,13 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe NetlifyBuildHook do
-  around do |example|
-    original = ENV.to_hash
-    ENV['NETLIFY_BUILD_HOOK_URL'] = 'https://api.netlify.com/build_hooks/abc123'
-    example.run
-  ensure
-    ENV.replace(original)
-  end
+  # Default test config's hook URL is https://api.netlify.com/build_hooks/abc123.
+  let(:config) { build_config_for_specs }
 
   describe '.trigger' do
     let(:http) { instance_double(Net::HTTP) }
@@ -18,7 +13,7 @@ RSpec.describe NetlifyBuildHook do
       before do
         allow(Net::HTTP).to receive(:start).and_yield(http)
         allow(http).to receive(:post)
-        described_class.trigger
+        described_class.trigger(config:)
       end
 
       it 'opens a TLS connection to the hook host' do
@@ -36,7 +31,7 @@ RSpec.describe NetlifyBuildHook do
       before { allow(Net::HTTP).to receive(:start).and_raise(Errno::ECONNREFUSED) }
 
       it 'does not swallow the error (the caller rescues)' do
-        expect { described_class.trigger }.to raise_error(Errno::ECONNREFUSED)
+        expect { described_class.trigger(config:) }.to raise_error(Errno::ECONNREFUSED)
       end
     end
   end
