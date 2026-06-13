@@ -38,7 +38,8 @@ require_relative 'app/controllers/comments_controller'
 require_relative 'app/controllers/moderation_controller'
 
 RackApp = Rack::Builder.new do
-  use HealthController
+  use HealthController                # halts on /up, so the probe never reaches the logger below
+  use Rack::CommonLogger, AppLogger   # access log for all real traffic, into the shared stdout sink
   use RejectOversizeRequests
   use Rack::Attack
   use CommentsController
