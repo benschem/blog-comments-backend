@@ -1,7 +1,7 @@
 # Single-stage build. The sqlite3 gem ships a precompiled native gem for
 # x86_64/aarch64-linux-gnu (see Gemfile.lock PLATFORMS), so ruby:3.4.5-slim needs
 # no build tools and no system libsqlite3 — the gem bundles its own.
-FROM ruby:3.4.5-slim
+FROM ruby:4.0.5-slim
 
 # System packages: jemalloc (allocator) and tzdata (zoneinfo DB — slim ships none,
 # so without it TZ can't resolve named zones and logs fall back to UTC).
