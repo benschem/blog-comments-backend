@@ -84,7 +84,7 @@ rescue ActiveRecord::RecordNotFound
 end
 
 def attempt_site_rebuild
-  NetlifyBuildHook.trigger
+  BuildHook.trigger
   'site rebuild triggered'
 rescue StandardError => e
   "site rebuild failed! (#{e.class}: #{e.message})"

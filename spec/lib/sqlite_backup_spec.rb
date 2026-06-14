@@ -44,7 +44,7 @@ RSpec.describe SqliteBackup do
       let(:uploaded) { {} }
 
       before do
-        allow(R2Uploader).to receive(:put) { |**kwargs| uploaded.merge!(kwargs) }
+        allow(BackupUploader).to receive(:put) { |**kwargs| uploaded.merge!(kwargs) }
         run_backup
       end
 
@@ -63,21 +63,21 @@ RSpec.describe SqliteBackup do
       before do
         allow(described_class).to receive(:integrity_ok?).and_return(false)
         allow(BackupFailureEmail).to receive(:deliver_for)
-        allow(R2Uploader).to receive(:put)
+        allow(BackupUploader).to receive(:put)
       end
 
       it 'raises, emails the moderator, and never uploads', :aggregate_failures do
         expect { run_backup }.to raise_error(SqliteBackup::IntegrityError)
         expect(BackupFailureEmail).to have_received(:deliver_for).with(an_instance_of(SqliteBackup::IntegrityError))
-        expect(R2Uploader).not_to have_received(:put)
+        expect(BackupUploader).not_to have_received(:put)
       end
     end
 
     context 'when the upload fails' do
-      let(:upload_error) { R2Uploader::TransientUploadError.new('503') }
+      let(:upload_error) { BackupUploader::TransientUploadError.new('503') }
 
       before do
-        allow(R2Uploader).to receive(:put).and_raise(upload_error)
+        allow(BackupUploader).to receive(:put).and_raise(upload_error)
         allow(BackupFailureEmail).to receive(:deliver_for)
       end
 
@@ -89,12 +89,12 @@ RSpec.describe SqliteBackup do
 
     context 'when sending the failure email also fails' do
       before do
-        allow(R2Uploader).to receive(:put).and_raise(R2Uploader::UploadError, 'boom')
+        allow(BackupUploader).to receive(:put).and_raise(BackupUploader::UploadError, 'boom')
         allow(BackupFailureEmail).to receive(:deliver_for).and_raise(StandardError, 'mailer down')
       end
 
       it 'still raises the original backup error, not the mailer error' do
-        expect { run_backup }.to raise_error(R2Uploader::UploadError, 'boom')
+        expect { run_backup }.to raise_error(BackupUploader::UploadError, 'boom')
       end
     end
   end

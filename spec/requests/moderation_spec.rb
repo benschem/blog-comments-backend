@@ -43,7 +43,7 @@ RSpec.describe 'Moderation', type: :request do
 
       context 'when the build hook succeeds' do
         before do
-          allow(NetlifyBuildHook).to receive(:trigger)
+          allow(BuildHook).to receive(:trigger)
           post "/moderate/#{token}/approve"
         end
 
@@ -52,7 +52,7 @@ RSpec.describe 'Moderation', type: :request do
         end
 
         it 'triggers the build hook' do
-          expect(NetlifyBuildHook).to have_received(:trigger)
+          expect(BuildHook).to have_received(:trigger)
         end
 
         it 'redirects back to the review page' do
@@ -68,7 +68,7 @@ RSpec.describe 'Moderation', type: :request do
 
       context 'when the build hook fails' do
         before do
-          allow(NetlifyBuildHook).to receive(:trigger).and_raise(StandardError, 'hook down')
+          allow(BuildHook).to receive(:trigger).and_raise(StandardError, 'hook down')
           post "/moderate/#{token}/approve"
         end
 
@@ -82,7 +82,7 @@ RSpec.describe 'Moderation', type: :request do
       let(:token) { 'does-not-exist' }
 
       before do
-        allow(NetlifyBuildHook).to receive(:trigger)
+        allow(BuildHook).to receive(:trigger)
         post "/moderate/#{token}/approve"
       end
 
@@ -91,14 +91,14 @@ RSpec.describe 'Moderation', type: :request do
       end
 
       it 'does not trigger the build hook' do
-        expect(NetlifyBuildHook).not_to have_received(:trigger)
+        expect(BuildHook).not_to have_received(:trigger)
       end
     end
   end
 
   describe 'POST /moderate/:token/reject' do
     before do
-      allow(NetlifyBuildHook).to receive(:trigger)
+      allow(BuildHook).to receive(:trigger)
       post "/moderate/#{token}/reject"
     end
 
@@ -110,7 +110,7 @@ RSpec.describe 'Moderation', type: :request do
       end
 
       it 'does not trigger the build hook' do
-        expect(NetlifyBuildHook).not_to have_received(:trigger)
+        expect(BuildHook).not_to have_received(:trigger)
       end
 
       it 'redirects back to the review page' do
@@ -135,7 +135,7 @@ RSpec.describe 'Moderation', type: :request do
 
   describe 'POST /moderate/:token/mark_spam' do
     before do
-      allow(NetlifyBuildHook).to receive(:trigger)
+      allow(BuildHook).to receive(:trigger)
       post "/moderate/#{token}/mark_spam"
     end
 
@@ -147,7 +147,7 @@ RSpec.describe 'Moderation', type: :request do
       end
 
       it 'does not trigger the build hook' do
-        expect(NetlifyBuildHook).not_to have_received(:trigger)
+        expect(BuildHook).not_to have_received(:trigger)
       end
 
       it 'redirects back to the review page' do

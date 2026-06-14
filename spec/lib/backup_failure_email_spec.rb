@@ -12,7 +12,7 @@ RSpec.describe BackupFailureEmail do
   before { allow(AppMailer).to receive(:deliver) { |params, **| email.merge!(params) } }
 
   describe '.deliver_for' do
-    let(:error) { R2Uploader::UploadError.new('PutObject backup.gz returned 403: AccessDenied') }
+    let(:error) { BackupUploader::UploadError.new('PutObject backup.gz returned 403: AccessDenied') }
 
     before { described_class.deliver_for(error, config:) }
 

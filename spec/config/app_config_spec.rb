@@ -9,7 +9,7 @@ RSpec.describe AppConfig do
       'RESEND_API_KEY' => 're_xxx',
       'RESEND_FROM_EMAIL' => 'from@example.test',
       'MODERATION_NOTIFY_EMAIL' => 'mod@example.test',
-      'NETLIFY_BUILD_HOOK_URL' => 'https://hooks.test/abc'
+      'BUILD_HOOK_URL' => 'https://hooks.test/abc'
     }
   end
 
@@ -21,8 +21,8 @@ RSpec.describe AppConfig do
     end
 
     it 'raises and names every missing key' do
-      expect { described_class.build(complete.except('RESEND_API_KEY', 'NETLIFY_BUILD_HOOK_URL')) }
-        .to raise_error(AppConfig::MissingEnvError, /RESEND_API_KEY.*NETLIFY_BUILD_HOOK_URL/)
+      expect { described_class.build(complete.except('RESEND_API_KEY', 'BUILD_HOOK_URL')) }
+        .to raise_error(AppConfig::MissingEnvError, /RESEND_API_KEY.*BUILD_HOOK_URL/)
     end
 
     it 'treats blank or whitespace-only values as missing' do

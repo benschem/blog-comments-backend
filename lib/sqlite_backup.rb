@@ -32,7 +32,7 @@ module SqliteBackup
       verify_integrity(snapshot)
       body = gzip(File.binread(snapshot))
       key = object_key
-      R2Uploader.put(key:, body:, content_type: CONTENT_TYPE, config:)
+      BackupUploader.put(key:, body:, content_type: CONTENT_TYPE, config:)
       [key, body.bytesize]
     end
   end

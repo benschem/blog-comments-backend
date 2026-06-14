@@ -2,8 +2,8 @@
 
 require 'spec_helper'
 
-RSpec.describe NetlifyBuildHook do
-  # Default test config's hook URL is https://api.netlify.com/build_hooks/abc123.
+RSpec.describe BuildHook do
+  # Default test config's hook URL is https://hooks.example.test/build/abc123.
   let(:config) { build_config_for_specs }
 
   describe '.trigger' do
@@ -18,12 +18,12 @@ RSpec.describe NetlifyBuildHook do
 
       it 'opens a TLS connection to the hook host' do
         expect(Net::HTTP).to have_received(:start).with(
-          'api.netlify.com', 443, hash_including(use_ssl: true)
+          'hooks.example.test', 443, hash_including(use_ssl: true)
         )
       end
 
       it 'POSTs an empty body to the hook path' do
-        expect(http).to have_received(:post).with('/build_hooks/abc123', '')
+        expect(http).to have_received(:post).with('/build/abc123', '')
       end
     end
 

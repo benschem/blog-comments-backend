@@ -18,8 +18,8 @@ approved.
    to `/comments`. It is stored on server in SQLite DB as `pending` and is not public.
 2. The backend emails the moderator (via [Resend](https://resend.com)) with the
    comment and a link to a moderation page containing unguessable approve/reject links.
-3. Moderator clicks approve. The comment is marked as `approved` and triggers a
-   Netlify build hook to fire.
+3. Moderator clicks approve. The comment is marked as `approved` and fires the
+   frontend's build hook (Netlify in this setup; any host with a deploy hook works).
 4. The frontend rebuilds, fetching approved comments at build time
    (`GET /comments?post_slug=…`) and baking them into static HTML.
 
@@ -79,8 +79,8 @@ Notes:
   `public_attributes` only (JSON).
 - `GET /moderate/:token`: prefetch-safe confirm page with approve / reject /
   mark-spam forms. Zero side effects.
-- `POST /moderate/:token/approve`: `approve!` the comment, then fire the Netlify
-  build hook.
+- `POST /moderate/:token/approve`: `approve!` the comment, then fire the build
+  hook.
 - `POST /moderate/:token/reject`: `reject!` the comment. No hook.
 - `POST /moderate/:token/mark_spam`: `mark_spam!` the comment. No hook.
 - `GET /up`: health check. Runs `SELECT 1` against the DB and returns
@@ -101,8 +101,8 @@ is the durable backstop that makes sure such a comment is never lost. All run vi
 
 - `comments:pending`: list the comments awaiting moderation, each with its id,
   local (AEST) timestamp, post, author and a body excerpt.
-- `comments:approve[<id>]`: approve a comment by id, then fire the Netlify build
-  hook. The approval persists even if the hook fails (it's reported, not fatal).
+- `comments:approve[<id>]`: approve a comment by id, then fire the build hook.
+  The approval persists even if the hook fails (it's reported, not fatal).
 - `comments:reject[<id>]`: reject a comment by id. No hook.
 - `comments:mark_spam[<id>]`: mark a comment as spam by id. No hook.
 
@@ -143,7 +143,7 @@ abort with a clear message on an unknown or missing id.
 │   ├── app_mailer.rb        # AppMailer: Resend transport, 10s timeout
 │   ├── mail_helpers.rb      # escape_html
 │   └── mail/                # ModerationEmail, PendingAlertEmail, SpamDigestEmail, BackupFailureEmail
-├── lib/                     # NetlifyBuildHook, Sigv4Signer, R2Uploader, SqliteBackup
+├── lib/                     # BuildHook, Sigv4Signer, BackupUploader, SqliteBackup
 ├── scripts/restore-backup.sh # laptop-run restore of the database from an R2 backup
 ├── views/moderate.erb       # the moderation confirm page (noindex)
 ├── db/                      # migrate/ + schema.rb (databases gitignored)
@@ -194,7 +194,8 @@ Copy `.env.example` to `.env` and set:
 - `RESEND_FROM_EMAIL`: sender address, e.g. `comments@benschem.dev`.
 - `MODERATION_NOTIFY_EMAIL`: inbox that receives new-comment notifications and the
   stale-pending digest.
-- `NETLIFY_BUILD_HOOK_URL`: Netlify build hook fired on approve.
+- `BUILD_HOOK_URL`: the frontend host's build/deploy hook, fired on approve. Any
+  host works (Netlify is the reference); it's just a URL the backend POSTs to.
 
 `AppConfig` reads these once at boot and crashes immediately if any required one
 is blank, so a half-configured deploy fails fast instead of running broken.
@@ -264,7 +265,7 @@ Each run snapshots the live database with `VACUUM INTO` over its own short-lived
 connection (WAL-safe, committed rows only, folded into one sidecar-free file), checks
 it with `PRAGMA integrity_check`, gzips it, and uploads it to the
 `blog-comments-backups` bucket under a timestamped key (`comments-<UTC>.sqlite3.gz`).
-The upload is a plain S3 `PutObject` signed with SigV4 (`Sigv4Signer` + `R2Uploader`,
+The upload is a plain S3 `PutObject` signed with SigV4 (`Sigv4Signer` + `BackupUploader`,
 stdlib only; R2 speaks the S3 API, so there's no `aws-sdk` dependency). It retries a
 5xx or network blip a few times but fails fast on a 4xx. Any failure is logged and
 emailed to the moderator (`BackupFailureEmail`).

@@ -30,7 +30,7 @@ RSpec.describe 'comments rake tasks', type: :task do
 
     context 'when the rebuild succeeds' do
       before do
-        allow(NetlifyBuildHook).to receive(:trigger)
+        allow(BuildHook).to receive(:trigger)
         task_output
       end
 
@@ -39,13 +39,13 @@ RSpec.describe 'comments rake tasks', type: :task do
       end
 
       it 'triggers a site rebuild' do
-        expect(NetlifyBuildHook).to have_received(:trigger)
+        expect(BuildHook).to have_received(:trigger)
       end
     end
 
     context 'when the rebuild fails' do
       before do
-        allow(NetlifyBuildHook).to receive(:trigger).and_raise(StandardError, 'hook down')
+        allow(BuildHook).to receive(:trigger).and_raise(StandardError, 'hook down')
         task_output
       end
 
@@ -75,7 +75,7 @@ RSpec.describe 'comments rake tasks', type: :task do
 
   describe 'comments:reject' do
     before do
-      allow(NetlifyBuildHook).to receive(:trigger)
+      allow(BuildHook).to receive(:trigger)
       run_task('comments:reject', comment.id)
     end
 
@@ -84,13 +84,13 @@ RSpec.describe 'comments rake tasks', type: :task do
     end
 
     it 'does not trigger a site rebuild' do
-      expect(NetlifyBuildHook).not_to have_received(:trigger)
+      expect(BuildHook).not_to have_received(:trigger)
     end
   end
 
   describe 'comments:mark_spam' do
     before do
-      allow(NetlifyBuildHook).to receive(:trigger)
+      allow(BuildHook).to receive(:trigger)
       run_task('comments:mark_spam', comment.id)
     end
 
@@ -99,7 +99,7 @@ RSpec.describe 'comments rake tasks', type: :task do
     end
 
     it 'does not trigger a site rebuild' do
-      expect(NetlifyBuildHook).not_to have_received(:trigger)
+      expect(BuildHook).not_to have_received(:trigger)
     end
   end
 

@@ -7,21 +7,21 @@ class AppConfig
     resend_api_key: 'RESEND_API_KEY',
     resend_from_email: 'RESEND_FROM_EMAIL',
     moderation_notify_email: 'MODERATION_NOTIFY_EMAIL',
-    netlify_build_hook_url: 'NETLIFY_BUILD_HOOK_URL'
+    build_hook_url: 'BUILD_HOOK_URL'
   }.freeze
 
   class MissingEnvError < StandardError; end
 
   attr_reader :app_base_url, :resend_api_key, :resend_from_email,
-              :moderation_notify_email, :netlify_build_hook_url
+              :moderation_notify_email, :build_hook_url
 
   def initialize(app_base_url:, resend_api_key:, resend_from_email:,
-                 moderation_notify_email:, netlify_build_hook_url:)
+                 moderation_notify_email:, build_hook_url:)
     @app_base_url = app_base_url
     @resend_api_key = resend_api_key
     @resend_from_email = resend_from_email
     @moderation_notify_email = moderation_notify_email
-    @netlify_build_hook_url = netlify_build_hook_url
+    @build_hook_url = build_hook_url
     freeze
   end
 

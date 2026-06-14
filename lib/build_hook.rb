@@ -3,14 +3,17 @@
 require 'net/http'
 require 'uri'
 
-# Triggers Netlify's build hook so the static site rebuilds.
-module NetlifyBuildHook
+# Triggers the frontend host's build hook so the static site rebuilds
+#
+# Host-agnostic: any deploy/build hook is just a URL we POST an empty body to
+# (Netlify, Vercel, Cloudflare Pages, a CI dispatch, etc). The URL is config
+module BuildHook
   TIMEOUT_SECONDS = 5
 
   module_function
 
   def trigger(config: AppConfig.current)
-    uri = URI.parse(config.netlify_build_hook_url)
+    uri = URI.parse(config.build_hook_url)
 
     Net::HTTP.start(uri.host,
                     uri.port,

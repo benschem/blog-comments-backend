@@ -3,13 +3,9 @@
 require 'net/http'
 require 'uri'
 
-# Uploads a single object to the R2 bucket with an S3 PutObject, retrying transient failures.
-# Stdlib only (Net::HTTP), matching NetlifyBuildHook's no-gem style. The request is signed by
-# Sigv4Signer - this class is only concerned with the HTTP call and its failure handling.
-#
-# Object keys must be URL-safe (the timestamped `comments-<...>.sqlite3.gz` keys are), since
-# the signed canonical request uses the path verbatim without percent-encoding.
-class R2Uploader
+# Uploads a single object to any S3-compatible object storage
+# BackupConfig configures keys for Cloudflare R2 by default
+class BackupUploader
   BUCKET = 'blog-comments-backups'
 
   OPEN_TIMEOUT_SECONDS = 5
@@ -48,7 +44,7 @@ class R2Uploader
     rescue TransientUploadError => e
       raise if attempt >= UPLOAD_MAX_ATTEMPTS
 
-      AppLogger.warn "[R2Uploader] attempt #{attempt}/#{UPLOAD_MAX_ATTEMPTS} failed (#{e.message}); retrying"
+      AppLogger.warn "[BackupUploader] attempt #{attempt}/#{UPLOAD_MAX_ATTEMPTS} failed (#{e.message}); retrying"
       sleep BACKOFF_BASE_SECONDS * (2**(attempt - 1))
       retry
     end

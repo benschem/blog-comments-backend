@@ -7,7 +7,7 @@ module ConfigHelpers
     'RESEND_API_KEY' => 'test_key',
     'RESEND_FROM_EMAIL' => 'comments@benschem.dev',
     'MODERATION_NOTIFY_EMAIL' => 'ben@benschem.dev',
-    'NETLIFY_BUILD_HOOK_URL' => 'https://api.netlify.com/build_hooks/abc123'
+    'BUILD_HOOK_URL' => 'https://hooks.example.test/build/abc123'
   }.freeze
 
   # Build config the way production does, optionally overriding individual values

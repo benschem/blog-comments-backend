@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe R2Uploader do
+RSpec.describe BackupUploader do
   let(:config) do
     BackupConfig.build(
       'R2_ACCESS_KEY_ID' => 'access-key-id',
@@ -43,7 +43,7 @@ RSpec.describe R2Uploader do
 
       it 'PUTs the object to its bucket-scoped URL with the right content type', :aggregate_failures do
         expect(request.method).to eq('PUT')
-        expect(request.uri.to_s).to eq("#{config.r2_endpoint}/#{R2Uploader::BUCKET}/" \
+        expect(request.uri.to_s).to eq("#{config.r2_endpoint}/#{BackupUploader::BUCKET}/" \
                                        'comments-20260614T033000Z.sqlite3.gz')
         expect(request.body).to eq('gzip-bytes')
         expect(request['content-type']).to eq('application/gzip')
@@ -87,16 +87,16 @@ RSpec.describe R2Uploader do
     end
 
     it 'raises after exhausting attempts on a persistent 5xx', :aggregate_failures do
-      respond_with(*Array.new(R2Uploader::UPLOAD_MAX_ATTEMPTS) { http_response('503') })
+      respond_with(*Array.new(BackupUploader::UPLOAD_MAX_ATTEMPTS) { http_response('503') })
 
-      expect { uploader.put }.to raise_error(R2Uploader::TransientUploadError)
-      expect(http).to have_received(:request).exactly(R2Uploader::UPLOAD_MAX_ATTEMPTS).times
+      expect { uploader.put }.to raise_error(BackupUploader::TransientUploadError)
+      expect(http).to have_received(:request).exactly(BackupUploader::UPLOAD_MAX_ATTEMPTS).times
     end
 
     it 'fails fast on a 4xx without retrying (e.g. a bad token)', :aggregate_failures do
       respond_with(http_response('403', 'AccessDenied'))
 
-      expect { uploader.put }.to raise_error(R2Uploader::UploadError, /403/)
+      expect { uploader.put }.to raise_error(BackupUploader::UploadError, /403/)
       expect(http).to have_received(:request).once
     end
   end
