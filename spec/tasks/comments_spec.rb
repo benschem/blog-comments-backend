@@ -96,4 +96,13 @@ RSpec.describe 'comments rake tasks', type: :task do
       expect(NetlifyBuildHook).not_to have_received(:trigger)
     end
   end
+
+  describe 'comments:backup' do
+    before { allow(SqliteBackup).to receive(:run) }
+
+    it 'runs the SQLite backup' do
+      run_task('comments:backup')
+      expect(SqliteBackup).to have_received(:run)
+    end
+  end
 end

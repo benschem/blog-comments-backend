@@ -17,6 +17,7 @@ end
 #   bundle exec rake 'comments:approve[id]'    # Approve comment and trigger site rebuild
 #   bundle exec rake 'comments:reject[id]'     # Reject comment
 #   bundle exec rake 'comments:mark_spam[id]'  # Mark comment as spam
+#   bundle exec rake comments:backup           # Snapshot the database and upload it to R2
 namespace :comments do
   desc 'List comments awaiting moderation'
   task pending: 'db:load_config' do
@@ -60,6 +61,12 @@ namespace :comments do
     comment = fetch_comment(args[:id])
     comment.mark_spam!
     puts "Marked as spam: [##{comment.id}] (#{comment.post_slug} — #{comment.author_name})."
+  end
+
+  desc 'Snapshot the database and upload it to R2'
+  task backup: 'db:load_config' do
+    # Logs its own success/failure via AppLogger; raises (non-zero exit) if the backup fails
+    SqliteBackup.run
   end
 end
 
