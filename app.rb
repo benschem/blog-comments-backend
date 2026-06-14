@@ -15,6 +15,7 @@ require_relative 'app/middleware/reject_oversize_requests'
 # Config
 require_relative 'config/app_logger'
 require_relative 'config/app_config'
+require_relative 'config/backup_config'
 require_relative 'config/rack_attack'
 
 # Models
