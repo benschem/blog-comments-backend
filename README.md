@@ -396,6 +396,23 @@ for that. The failure email also only covers a backup that *ran and errored*; a 
 that never runs (a dead scheduler) isn't caught in-app, which is what the external
 `/up` uptime monitor is for.
 
+## Swapping the host, email or storage
+
+Three things point at a specific vendor. Each is isolated to one spot, so you can
+repoint it without touching the rest:
+
+- Host / build hook: `BuildHook` (`lib/build_hook.rb`) POSTs an empty body to
+  `BUILD_HOOK_URL`. Any host with a deploy/build hook (Netlify, Vercel, Cloudflare
+  Pages, a CI dispatch) is just a different URL, no code change.
+- Email: `AppMailer` (`mailer/app_mailer.rb`) is the only code that talks to
+  Resend. Moving to another provider means changing that one class to call the new
+  SDK behind the same `deliver(email)` call; the mail objects and the rest of the
+  app don't notice.
+- Backup storage: `BackupUploader` signs an S3 `PutObject` with SigV4, so it
+  already works against any S3-compatible store (Backblaze B2, AWS S3, MinIO).
+  Point `R2_ENDPOINT` and the bucket elsewhere and it's done; only the `R2_*`
+  variable names still say R2.
+
 ## Security & spam defenses
 
 - Approve-first moderation: nothing is public without the moderator's action.
