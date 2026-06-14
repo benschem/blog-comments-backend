@@ -90,6 +90,91 @@ Notes:
 Moderation mutations happen on POST, not GET, because mail clients prefetch GET
 links.
 
+## Connecting a frontend
+
+The frontend touches the backend at two points: a form that submits a comment, and
+a build-time fetch that reads the approved ones. That's the whole contract, so any
+static site generator works.
+
+### Submitting a comment
+
+A plain HTML form that POSTs to `/comments`. No JavaScript, and the POST is
+cross-origin on purpose (`HttpOrigin` protection is off and there are no sessions,
+so there's no CSRF surface to protect).
+
+```html
+<form method="post" action="https://comments.example.com/comments">
+  <input type="hidden" name="post_slug" value="my-first-post">
+  <label>Name <input name="author_name" required></label>
+  <label>Website <input name="author_website" type="url"></label> <!-- optional -->
+  <label>Role <input name="author_role"></label>                  <!-- optional -->
+  <label>Comment <textarea name="body" required></textarea></label>
+
+  <!-- Honeypot. Hide it from people; bots fill it and get silently dropped. -->
+  <input type="text" name="homepage" tabindex="-1" autocomplete="off"
+         aria-hidden="true" style="position:absolute;left:-9999px">
+
+  <button type="submit">Post</button>
+</form>
+```
+
+`post_slug` is the join key. It has to match the slug you query at build time, so
+set it from whatever your generator knows about the current page (its file name,
+frontmatter, or route). Get it wrong and the comment is stored against a slug
+nothing reads.
+
+The response is always JSON:
+
+- `201 {"status":"pending"}`: accepted, awaiting moderation. A comment that trips
+  the spam heuristic returns this too (stored, never emailed), so a bot can't tell
+  acceptance from rejection.
+- `200 {"status":"pending"}`: the honeypot was filled. Identical on purpose;
+  nothing was stored.
+- `422 {"errors": [...]}`: `author_name` or `body` was missing or blank.
+- `429`: past the 5-per-60s per-IP limit.
+- `413`: body over 64 KB.
+
+Because it's a real form POST, the browser navigates to that JSON response on
+submit. If you'd rather the visitor stay on the page or see a "thanks, awaiting
+review" message, that's the one place you'd add a little JS to submit with `fetch`
+and handle the response yourself. It isn't required, and the no-JS path keeps
+working as a fallback.
+
+### Reading comments at build time
+
+`GET /comments?post_slug=<slug>` returns that post's approved comments as JSON,
+oldest first, public fields only:
+
+```json
+[
+  {
+    "author_name": "Ada",
+    "author_website": "https://example.com",
+    "author_role": "Engineer",
+    "body": "First!",
+    "created_at": "2026-06-01T09:30:00Z"
+  }
+]
+```
+
+`author_website` and `author_role` may be null, `created_at` is an ISO 8601
+timestamp, and an empty array means nothing's approved yet. No token, IP,
+user-agent or status is ever served (see *Data model*).
+
+Fetch this for each post during your build and render the comments into the page.
+The read happens server-side at build time, so there's no client request, no CORS
+to set up, and no comment markup for an adblocker to strip. `body` is stored as
+plain text: escape it when you render, and give `author_website` links
+`rel="nofollow ugc"`.
+
+### Triggering a rebuild on approve
+
+Approving a comment POSTs to `BUILD_HOOK_URL` to start a rebuild. Create a
+build/deploy hook on your host, put its URL in that variable (see *Environment
+variables*), and the loop closes: approve, rebuild, the comment is baked into the
+next build. If the hook call fails the approval still stands; it's logged, not
+fatal, so you can trigger a build by hand from your host.
+
 ## Command-line moderation
 
 The email links are the primary moderation UI, but the same actions are available
