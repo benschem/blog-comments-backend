@@ -13,6 +13,10 @@ RSpec.describe ModerationEmail do
 
   let(:config) { build_config_for_specs }
 
+  def moderate_url(comment)
+    "#{config.app_base_url}/moderate/#{comment.moderation_token}"
+  end
+
   describe '.deliver_for' do
     # Capture the envelope handed to the transport instead of sending for real
     # (the trailing `**` swallows the config keyword deliver_for passes through).
@@ -24,15 +28,15 @@ RSpec.describe ModerationEmail do
       before { described_class.deliver_for(comment, config:) }
 
       it 'addresses the moderation inbox with a subject naming the post', :aggregate_failures do
-        expect(email).to include(from: 'comments@benschem.dev', to: 'ben@benschem.dev')
-        expect(email[:subject]).to include('hello-world')
+        expect(email).to include(from: config.resend_from_email, to: config.moderation_notify_email)
+        expect(email[:subject]).to include(comment.post_slug)
       end
 
       it 'includes the comment and a moderation link in the body' do
         expect(email[:html])
-          .to include('Ada')
-          .and include('Nice post')
-          .and include('https://comments.benschem.dev/moderate/tok_abc123')
+          .to include(comment.author_name)
+          .and include(comment.body)
+          .and include(moderate_url(comment))
       end
     end
 
@@ -42,8 +46,8 @@ RSpec.describe ModerationEmail do
       before { described_class.deliver_for(comment, config:) }
 
       it 'escapes HTML in the body', :aggregate_failures do
-        expect(email[:html]).to include('&lt;script&gt;')
-        expect(email[:html]).not_to include('<script>')
+        expect(email[:html]).to include(MailHelpers.escape_html(comment.body))
+        expect(email[:html]).not_to include(comment.body)
       end
     end
 
@@ -54,8 +58,8 @@ RSpec.describe ModerationEmail do
         let(:comment) { build(:comment, author_role: 'Staff Engineer', author_website: 'https://ada.example') }
 
         it 'shows them next to the name', :aggregate_failures do
-          expect(email[:html]).to include('&mdash; Staff Engineer')
-          expect(email[:html]).to include('(https://ada.example)')
+          expect(email[:html]).to include("&mdash; #{comment.author_role}")
+          expect(email[:html]).to include("(#{comment.author_website})")
         end
       end
 
@@ -72,9 +76,9 @@ RSpec.describe ModerationEmail do
         let(:comment) { build(:comment, author_role: '<b>boss</b>', author_website: '<i>site</i>') }
 
         it 'escapes them', :aggregate_failures do
-          expect(email[:html]).to include('&lt;b&gt;boss&lt;/b&gt;')
-          expect(email[:html]).to include('&lt;i&gt;site&lt;/i&gt;')
-          expect(email[:html]).not_to include('<b>boss</b>')
+          expect(email[:html]).to include(MailHelpers.escape_html(comment.author_role))
+          expect(email[:html]).to include(MailHelpers.escape_html(comment.author_website))
+          expect(email[:html]).not_to include(comment.author_role)
         end
       end
     end

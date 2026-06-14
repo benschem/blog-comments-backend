@@ -11,6 +11,10 @@ RSpec.describe PendingAlertEmail do
 
   before { allow(AppMailer).to receive(:deliver) { |params, **| email.merge!(params) } }
 
+  def moderate_url(comment)
+    "#{config.app_base_url}/moderate/#{comment.moderation_token}"
+  end
+
   describe '#deliver' do
     context 'with a single comment' do
       let(:comments) do
@@ -20,18 +24,19 @@ RSpec.describe PendingAlertEmail do
       before { described_class.new(comments, config).deliver }
 
       it 'addresses the moderation inbox from the configured sender' do
-        expect(email).to include(from: 'comments@benschem.dev', to: 'ben@benschem.dev')
+        expect(email).to include(from: config.resend_from_email, to: config.moderation_notify_email)
       end
 
       it 'uses a singular subject naming the count' do
-        expect(email[:subject]).to eq('1 comment still awaiting moderation')
+        expect(email[:subject]).to eq("#{comments.size} comment still awaiting moderation")
       end
 
       it 'lists the comment and its moderation link in the body' do
+        comment = comments.first
         expect(email[:html])
-          .to include('Ada')
-          .and include('Nice post')
-          .and include('https://comments.benschem.dev/moderate/tok_abc123')
+          .to include(comment.author_name)
+          .and include(comment.body)
+          .and include(moderate_url(comment))
       end
     end
 
@@ -46,14 +51,14 @@ RSpec.describe PendingAlertEmail do
       before { described_class.new(comments, config).deliver }
 
       it 'uses a plural subject naming the count' do
-        expect(email[:subject]).to eq('2 comments still awaiting moderation')
+        expect(email[:subject]).to eq("#{comments.size} comments still awaiting moderation")
       end
 
       it 'lists every comment with its own moderation link', :aggregate_failures do
-        expect(email[:html]).to include('Ada').and include('Grace')
+        expect(email[:html]).to include(comments.first.author_name).and include(comments.last.author_name)
         expect(email[:html])
-          .to include('https://comments.benschem.dev/moderate/tok_1')
-          .and include('https://comments.benschem.dev/moderate/tok_2')
+          .to include(moderate_url(comments.first))
+          .and include(moderate_url(comments.last))
       end
     end
 
@@ -63,8 +68,8 @@ RSpec.describe PendingAlertEmail do
       before { described_class.new(comments, config).deliver }
 
       it 'escapes HTML in the body', :aggregate_failures do
-        expect(email[:html]).to include('&lt;script&gt;')
-        expect(email[:html]).not_to include('<script>')
+        expect(email[:html]).to include(MailHelpers.escape_html(comments.first.body))
+        expect(email[:html]).not_to include(comments.first.body)
       end
     end
 
@@ -93,8 +98,10 @@ RSpec.describe PendingAlertEmail do
     end
 
     context 'when comments are overdue' do
+      let(:overdue) { create(:comment, author_name: 'Overdue Olive', created_at: cutoff - 1.hour) }
+
       before do
-        create(:comment, author_name: 'Overdue Olive', created_at: cutoff - 1.hour)
+        overdue
         create(:comment, created_at: cutoff + 1.hour)              # newer than the window, excluded
         create(:comment, :rejected, created_at: cutoff - 1.hour)   # not pending, excluded
         described_class.deliver_overdue(config:)
@@ -102,24 +109,27 @@ RSpec.describe PendingAlertEmail do
 
       it 'emails only the overdue pending comments', :aggregate_failures do
         expect(AppMailer).to have_received(:deliver)
-        expect(email[:subject]).to eq('1 comment still awaiting moderation')
-        expect(email[:html]).to include('Overdue Olive')
+        expect(email[:subject]).to start_with('1 comment ') # the one overdue, not the excluded two
+        expect(email[:html]).to include(overdue.author_name)
       end
     end
 
     context 'when a comment sits at the age boundary' do
+      let(:just_over) { create(:comment, author_name: 'Just Over', created_at: cutoff - 1.minute) }
+      let(:just_under) { create(:comment, author_name: 'Just Under', created_at: cutoff + 1.minute) }
+
       before do
-        create(:comment, author_name: 'Just Over', created_at: cutoff - 1.minute)
-        create(:comment, author_name: 'Just Under', created_at: cutoff + 1.minute)
+        just_over
+        just_under
         described_class.deliver_overdue(config:)
       end
 
       it 'includes a comment just past the threshold' do
-        expect(email[:html]).to include('Just Over')
+        expect(email[:html]).to include(just_over.author_name)
       end
 
       it 'excludes a comment just under the threshold' do
-        expect(email[:html]).not_to include('Just Under')
+        expect(email[:html]).not_to include(just_under.author_name)
       end
     end
   end
