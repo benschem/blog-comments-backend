@@ -33,6 +33,7 @@ require_relative 'mailer/mail_helpers'
 require_relative 'mailer/mail/moderation_email'
 require_relative 'mailer/mail/pending_alert_email'
 require_relative 'mailer/mail/spam_digest_email'
+require_relative 'mailer/mail/backup_failure_email'
 
 # Jobs
 require_relative 'app/jobs/notify_moderator_job'
