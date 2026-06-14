@@ -26,6 +26,7 @@ require_relative 'app/models/comment'
 require_relative 'lib/netlify_build_hook'
 require_relative 'lib/sigv4_signer'
 require_relative 'lib/r2_uploader'
+require_relative 'lib/sqlite_backup'
 
 # Mail
 require_relative 'mailer/app_mailer'
