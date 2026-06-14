@@ -16,3 +16,7 @@ spec/examples.txt
 
 # Simplecov output
 coverage/
+
+# Personal, host-specific deploy state, not part of the generic app
+/DEPLOYMENT.md
+/scripts/deploy.env
