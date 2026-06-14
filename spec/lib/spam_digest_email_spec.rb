@@ -90,10 +90,12 @@ RSpec.describe SpamDigestEmail do
   end
 
   describe '.deliver_recent' do
+    let(:cutoff) { Comment::RECENT_SPAM_DAYS.days.ago }
+
     context 'when nothing was flagged in the window' do
       before do
-        create(:comment, :spam, created_at: 8.days.ago) # older than the window
-        create(:comment, created_at: 1.day.ago) # recent but pending, not spam
+        create(:comment, :spam, created_at: cutoff - 1.hour)  # older than the window
+        create(:comment, created_at: cutoff + 1.hour)         # recent but pending, not spam
         described_class.deliver_recent(config:)
       end
 
@@ -104,9 +106,9 @@ RSpec.describe SpamDigestEmail do
 
     context 'when comments were flagged this week' do
       before do
-        create(:comment, :spam, author_name: 'Recent Rita', created_at: 1.day.ago)
-        create(:comment, :spam, author_name: 'Old Otto', created_at: 8.days.ago) # outside the window
-        create(:comment, :approved, author_name: 'Fine Fiona', created_at: 1.day.ago) # not spam
+        create(:comment, :spam, author_name: 'Recent Rita', created_at: cutoff + 1.hour)
+        create(:comment, :spam, author_name: 'Old Otto', created_at: cutoff - 1.hour) # outside the window
+        create(:comment, :approved, author_name: 'Fine Fiona', created_at: cutoff + 1.hour) # not spam
         described_class.deliver_recent(config:)
       end
 

@@ -5,11 +5,10 @@
 class SpamDigestEmail
   include MailHelpers
 
-  RECENT_WITHIN = 7.days
   MAX_LISTED = 50
 
   def self.deliver_recent(config: AppConfig.current)
-    new(Comment.spam_since(RECENT_WITHIN.ago), config).deliver
+    new(Comment.recent_spam, config).deliver
   end
 
   def initialize(comments, config)

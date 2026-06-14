@@ -182,17 +182,18 @@ RSpec.describe Comment do
       end
     end
 
-    describe '.spam_since' do
-      let!(:recent_spam) { create(:comment, :spam, created_at: 1.hour.ago) }
-      let!(:older_spam) { create(:comment, :spam, created_at: 3.hours.ago) }
+    describe '.recent_spam' do
+      let(:cutoff) { described_class::RECENT_SPAM_DAYS.days.ago }
+      let!(:newer_spam) { create(:comment, :spam, created_at: cutoff + 1.hour) }
+      let!(:older_spam) { create(:comment, :spam, created_at: cutoff + 1.minute) }
 
       before do
-        create(:comment, :spam, created_at: 2.days.ago) # too old
-        create(:comment, :approved, created_at: 1.hour.ago) # recent but not spam
+        create(:comment, :spam, created_at: cutoff - 1.hour) # older than the window
+        create(:comment, :approved, created_at: cutoff + 1.hour) # recent but not spam
       end
 
-      it 'returns spam since the cutoff, newest first' do
-        expect(described_class.spam_since(6.hours.ago)).to eq([recent_spam, older_spam])
+      it 'returns spam within the window, newest first' do
+        expect(described_class.recent_spam).to eq([newer_spam, older_spam])
       end
     end
   end

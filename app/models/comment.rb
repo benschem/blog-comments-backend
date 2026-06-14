@@ -9,6 +9,9 @@ class Comment < ActiveRecord::Base
   # A pending comment is "stale" once it has gone unmoderated for this long
   STALE_AFTER_HOURS = 24
 
+  # How far back the weekly spam digest looks for auto-flagged spam to recheck
+  RECENT_SPAM_DAYS = 7
+
   has_secure_token :moderation_token
 
   validates :post_slug, presence: true, length: { maximum: 200 }
@@ -25,7 +28,7 @@ class Comment < ActiveRecord::Base
   scope :for_slug, ->(slug) { where(post_slug: slug) }
   scope :pending, -> { where(status: 'pending') }
   scope :stale_pending, -> { pending.where(created_at: ..STALE_AFTER_HOURS.hours.ago).order(:created_at) }
-  scope :spam_since, ->(time) { spam.where(created_at: time..).order(created_at: :desc) }
+  scope :recent_spam, -> { spam.where(created_at: RECENT_SPAM_DAYS.days.ago..).order(created_at: :desc) }
 
   def approve!
     update!(status: 'approved')
