@@ -65,6 +65,12 @@ RSpec.describe 'comments rake tasks', type: :task do
         expect { run_task('comments:approve', unknown_id) }.to raise_error(SystemExit)
       end
     end
+
+    context 'with no id given' do
+      it 'aborts with usage' do
+        expect { run_task('comments:approve') }.to raise_error(SystemExit)
+      end
+    end
   end
 
   describe 'comments:reject' do

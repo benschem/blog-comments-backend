@@ -138,6 +138,54 @@ RSpec.describe SpamDetection, type: :model do
         expect(comment.spam_score).to be >= 0.8
       end
     end
+
+    context 'with a URL in the role field' do
+      let(:author_role) { 'Editor at https://promo.example' }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.6
+      end
+    end
+
+    context 'with a URL shortener in the body' do
+      let(:body) { 'Grab the freebie here: bit.ly/free-stuff' }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.6
+      end
+    end
+
+    context 'with a run of Cyrillic characters' do
+      let(:body) { "\u041A\u0443\u043F\u0438\u0442\u044C best prices anywhere" }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.6
+      end
+    end
+
+    context 'with a long digit run in the name' do
+      let(:author_name) { 'Order 123456' }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.6
+      end
+    end
+
+    context 'with an unreasonably long name' do
+      let(:author_name) { 'a' * 81 }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.5
+      end
+    end
+
+    context 'with an email address in the name field' do
+      let(:author_name) { 'spammer@mail.example' }
+
+      it 'adds to the score' do
+        expect(comment.spam_score).to be >= 0.5
+      end
+    end
   end
 
   describe 'the detect_spam callback' do

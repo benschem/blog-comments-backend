@@ -3,7 +3,10 @@
 require 'bundler/setup'
 Bundler.require(:default, ENV['RACK_ENV'] || :development)
 
+# :nocov:
+# The production branch of this guard does not need to be tested
 require 'dotenv/load' unless ENV['RACK_ENV'] == 'production'
+# :nocov:
 require 'rack'
 require 'sinatra/base'
 require 'sinatra/activerecord'

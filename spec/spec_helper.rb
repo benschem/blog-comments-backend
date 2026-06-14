@@ -14,7 +14,7 @@ SimpleCov.start do
   track_files '{app,lib,mailer,config}/**/*.rb'
 
   # Fail the run if coverage regresses
-  minimum_coverage line: 100, branch: 88
+  minimum_coverage line: 100, branch: 100
 end
 
 # Use the `test` block from config/database.yml to load the test db file before the app boots
