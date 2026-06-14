@@ -8,4 +8,7 @@ class BaseController < Sinatra::Base
   set :database_file, 'config/database.yml'
 
   set :protection, except: [:http_origin] # Allow cross-origin POSTs
+
+  # Keep every response out of search indexes
+  before { headers 'X-Robots-Tag' => 'noindex' }
 end

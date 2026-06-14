@@ -86,6 +86,11 @@ Notes:
 - `GET /up`: health check. Runs `SELECT 1` against the DB and returns
   `{"status":"ok"}` (200) or `{"status":"error"}` (503). Used by the Docker
   healthcheck and uptime monitoring.
+- `GET /robots.txt`: disallows all crawlers (`Disallow: /`).
+
+Every response also carries `X-Robots-Tag: noindex` because nothing here is meant to be
+indexed. The API is read by the static site at build time and the moderation
+pages are private, token-gated URLs.
 
 Moderation mutations happen on POST, not GET, because mail clients prefetch GET
 links.

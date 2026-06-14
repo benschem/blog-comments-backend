@@ -45,12 +45,15 @@ require_relative 'app/jobs/notify_moderator_job'
 # Controllers
 require_relative 'app/controllers/base_controller'
 require_relative 'app/controllers/health_controller'
+require_relative 'app/controllers/robots_controller'
 require_relative 'app/controllers/comments_controller'
 require_relative 'app/controllers/moderation_controller'
 
+# Requests go top to bottom through the stack - order matters
 RackApp = Rack::Builder.new do
-  use HealthController                # halts on /up, so the probe never reaches the logger below
-  use Rack::CommonLogger, AppLogger   # access log for all real traffic, into the shared stdout sink
+  use HealthController
+  use RobotsController
+  use Rack::CommonLogger, AppLogger
   use RejectOversizeRequests
   use Rack::Attack
   use CommentsController
