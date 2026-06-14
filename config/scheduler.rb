@@ -13,6 +13,9 @@ module Scheduler
   # Weekly, Monday 9am Sydney — digest of recently auto-flagged spam to catch false positives
   SPAM_DIGEST_CRON = '0 9 * * 1 Australia/Sydney'
 
+  # Daily, 3:30am Sydney (off-peak) — snapshot the database and upload it off-site to R2
+  BACKUP_CRON = '30 3 * * * Australia/Sydney'
+
   # Memoised so a stray second call can't start a duplicate thread, and so the
   # running scheduler stays referenced (avoid GC) for the life of the process
   def self.start
@@ -22,6 +25,9 @@ module Scheduler
 
       # Weekly, surface auto-flagged spam so a false positive can still be approved
       scheduler.cron(SPAM_DIGEST_CRON) { SpamDigestEmail.deliver_recent }
+
+      # Daily off-site backup of the SQLite database to R2
+      scheduler.cron(BACKUP_CRON) { SqliteBackup.run }
     end
   end
 end
