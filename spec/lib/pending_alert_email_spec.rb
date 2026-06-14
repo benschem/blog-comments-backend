@@ -78,7 +78,7 @@ RSpec.describe PendingAlertEmail do
   end
 
   describe '.deliver_overdue' do
-    let(:cutoff) { described_class::OVERDUE_AFTER_HOURS.hours.ago }
+    let(:cutoff) { Comment::STALE_AFTER_HOURS.hours.ago }
 
     context 'when nothing is overdue' do
       before do

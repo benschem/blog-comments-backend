@@ -6,6 +6,9 @@ class Comment < ActiveRecord::Base
 
   STATUSES = %w[pending approved spam rejected].freeze
 
+  # A pending comment is "stale" once it has gone unmoderated for this long
+  STALE_AFTER_HOURS = 24
+
   has_secure_token :moderation_token
 
   validates :post_slug, presence: true, length: { maximum: 200 }
@@ -21,7 +24,7 @@ class Comment < ActiveRecord::Base
   scope :spam, -> { where(status: 'spam') }
   scope :for_slug, ->(slug) { where(post_slug: slug) }
   scope :pending, -> { where(status: 'pending') }
-  scope :still_pending_after, ->(age) { pending.where(created_at: ..age.ago).order(:created_at) }
+  scope :stale_pending, -> { pending.where(created_at: ..STALE_AFTER_HOURS.hours.ago).order(:created_at) }
   scope :spam_since, ->(time) { spam.where(created_at: time..).order(created_at: :desc) }
 
   def approve!

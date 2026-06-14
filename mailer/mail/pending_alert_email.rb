@@ -4,10 +4,8 @@
 class PendingAlertEmail
   include MailHelpers
 
-  OVERDUE_AFTER_HOURS = 24
-
   def self.deliver_overdue(config: AppConfig.current)
-    new(Comment.still_pending_after(OVERDUE_AFTER_HOURS.hours), config).deliver
+    new(Comment.stale_pending, config).deliver
   end
 
   def initialize(comments, config)

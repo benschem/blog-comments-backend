@@ -140,6 +140,61 @@ RSpec.describe Comment do
         expect(described_class.for_slug('hello-world')).to contain_exactly(mine)
       end
     end
+
+    describe '.spam' do
+      let!(:spammy) { create(:comment, :spam) }
+
+      before do
+        create(:comment) # pending
+        create(:comment, :approved)
+      end
+
+      it 'returns only spam comments' do
+        expect(described_class.spam).to contain_exactly(spammy)
+      end
+    end
+
+    describe '.pending' do
+      let!(:waiting) { create(:comment) }
+
+      before do
+        create(:comment, :approved)
+        create(:comment, :spam)
+      end
+
+      it 'returns only pending comments' do
+        expect(described_class.pending).to contain_exactly(waiting)
+      end
+    end
+
+    describe '.stale_pending' do
+      let(:cutoff) { described_class::STALE_AFTER_HOURS.hours.ago }
+      let!(:stale_comment) { create(:comment, created_at: cutoff - 1.hour) }
+      let!(:older_stale_comment) { create(:comment, created_at: cutoff - 1.day) }
+
+      before do
+        create(:comment, created_at: cutoff + 1.hour) # pending but not yet stale
+        create(:comment, :approved, created_at: cutoff - 1.day) # old but not pending
+      end
+
+      it 'returns pending comments past the stale threshold, oldest first' do
+        expect(described_class.stale_pending).to eq([older_stale_comment, stale_comment])
+      end
+    end
+
+    describe '.spam_since' do
+      let!(:recent_spam) { create(:comment, :spam, created_at: 1.hour.ago) }
+      let!(:older_spam) { create(:comment, :spam, created_at: 3.hours.ago) }
+
+      before do
+        create(:comment, :spam, created_at: 2.days.ago) # too old
+        create(:comment, :approved, created_at: 1.hour.ago) # recent but not spam
+      end
+
+      it 'returns spam since the cutoff, newest first' do
+        expect(described_class.spam_since(6.hours.ago)).to eq([recent_spam, older_spam])
+      end
+    end
   end
 
   describe 'the comments shown on a post' do
@@ -174,6 +229,29 @@ RSpec.describe Comment do
       it 'moves a pending comment to rejected' do
         expect { comment.reject! }
           .to change { comment.reload.status }.from('pending').to('rejected')
+      end
+    end
+
+    describe '#mark_spam!' do
+      subject(:comment) { create(:comment) }
+
+      it 'moves a pending comment to spam' do
+        expect { comment.mark_spam! }
+          .to change { comment.reload.status }.from('pending').to('spam')
+      end
+    end
+
+    describe '#spam?' do
+      context 'when the comment is spam' do
+        subject(:comment) { build(:comment, :spam) }
+
+        it('is true') { expect(comment.spam?).to be(true) }
+      end
+
+      context 'when the comment is not spam' do
+        subject(:comment) { build(:comment, :approved) }
+
+        it('is false') { expect(comment.spam?).to be(false) }
       end
     end
 
