@@ -4,6 +4,17 @@
 require 'simplecov'
 SimpleCov.start do
   add_filter '/spec/'
+  add_filter 'config/puma.rb'
+
+  # Track both line and branch coverage so a conditional with only one side tested
+  # (e.g. an `if` whose `else` never runs) shows up instead of passing as "covered"
+  enable_coverage :branch
+
+  # Surface runtime files that no spec requires as 0% instead of omitting them
+  track_files '{app,lib,mailer,config}/**/*.rb'
+
+  # Fail the run if coverage regresses
+  minimum_coverage line: 100, branch: 88
 end
 
 # Use the `test` block from config/database.yml to load the test db file before the app boots
