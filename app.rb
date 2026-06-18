@@ -14,6 +14,7 @@ require 'active_support/cache'
 
 # Middleware
 require_relative 'app/middleware/request_id'
+require_relative 'app/middleware/request_logger'
 require_relative 'app/middleware/reject_oversize_requests'
 
 # Config
@@ -55,7 +56,7 @@ RackApp = Rack::Builder.new do
   use RequestId
   use HealthController
   use RobotsController
-  use Rack::CommonLogger, AppLogger
+  use RequestLogger
   use RejectOversizeRequests
   use Rack::Attack
   use CommentsController
