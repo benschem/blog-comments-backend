@@ -13,6 +13,7 @@ require 'sinatra/activerecord'
 require 'active_support/cache'
 
 # Middleware
+require_relative 'app/middleware/request_id'
 require_relative 'app/middleware/reject_oversize_requests'
 
 # Config
@@ -51,6 +52,7 @@ require_relative 'app/controllers/moderation_controller'
 
 # Requests go top to bottom through the stack - order matters
 RackApp = Rack::Builder.new do
+  use RequestId
   use HealthController
   use RobotsController
   use Rack::CommonLogger, AppLogger
