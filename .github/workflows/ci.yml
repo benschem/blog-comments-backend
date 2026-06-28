@@ -22,7 +22,7 @@ jobs:
     env:
       RACK_ENV: test
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - uses: ruby/setup-ruby@v1.313.0
         with:
           # ruby-version is read from .ruby-version automatically.
@@ -36,7 +36,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - uses: ruby/setup-ruby@v1.313.0
         with:
           bundler-cache: true
@@ -47,7 +47,7 @@ jobs:
     name: audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - uses: ruby/setup-ruby@v1.313.0
         with:
           bundler-cache: true
