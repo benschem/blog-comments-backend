@@ -23,7 +23,7 @@ jobs:
       RACK_ENV: test
     steps:
       - uses: actions/checkout@v6.0.3
-      - uses: ruby/setup-ruby@v1.313.0
+      - uses: ruby/setup-ruby@v1.314.0
         with:
           # ruby-version is read from .ruby-version automatically.
           bundler-cache: true # bundle install + cache gems keyed on Gemfile.lock
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.3
-      - uses: ruby/setup-ruby@v1.313.0
+      - uses: ruby/setup-ruby@v1.314.0
         with:
           bundler-cache: true
       - name: RuboCop
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.3
-      - uses: ruby/setup-ruby@v1.313.0
+      - uses: ruby/setup-ruby@v1.314.0
         with:
           bundler-cache: true
       - name: bundler-audit
