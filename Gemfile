@@ -31,7 +31,7 @@ group :development, :test do
   gem 'awesome_print'
   gem 'debug', platforms: %i[mri]
 
-  gem 'rubocop', '~> 1.87', require: false
+  gem 'rubocop', '~> 1.88', require: false
   gem 'rubocop-factory_bot', '~> 2.28', require: false
   gem 'rubocop-performance', '~> 1.26', require: false
   gem 'rubocop-rake', '~> 0.7', require: false
